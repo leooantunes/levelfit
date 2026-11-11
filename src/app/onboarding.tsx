@@ -3,9 +3,10 @@ import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleShee
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Kettu, Wordmark } from '@/components/Brand';
 import { GoalPicker } from '@/components/GoalPicker';
 import { Avatar, Button, Card, haptic, ProgressBar, Row, Txt } from '@/components/ui';
-import { AVATARS, C, PLAYER_COLORS, R, S } from '@/constants/theme';
+import { AVATARS, C, F, hardShadow, PLAYER_COLORS, R, S, STROKE } from '@/constants/theme';
 import { DEFAULT_HABIT_IDS } from '@/domain/habits';
 import { isOnlineAvailable } from '@/sync/supabase';
 import { useGame, type Mode } from '@/store/useGame';
@@ -33,7 +34,7 @@ function AvatarPicker({
               haptic();
               onAvatar(a);
             }}
-            style={[styles.avatarCell, a === avatar && { borderColor: color, backgroundColor: color + '22' }]}>
+            style={[styles.avatarCell, a === avatar && { borderColor: C.ink, backgroundColor: color + '40', boxShadow: hardShadow(3) }]}>
             <Txt style={{ fontSize: 28 }}>{a}</Txt>
           </Pressable>
         ))}
@@ -110,13 +111,11 @@ export default function Onboarding() {
   const steps = [
     // 0 — boas-vindas
     <View key="welcome" style={{ gap: S.xl, alignItems: 'center', paddingTop: S.xxl }}>
-      <Animated.Text entering={FadeInDown.springify()} style={{ fontSize: 96 }}>
-        ⚡
-      </Animated.Text>
+      <Animated.View entering={FadeInDown.springify()}>
+        <Kettu size={170} />
+      </Animated.View>
       <Animated.View entering={FadeInDown.delay(150)} style={{ alignItems: 'center', gap: S.sm }}>
-        <Txt variant="title" style={{ fontSize: 44 }} color={C.primary}>
-          LEVEL FIT
-        </Txt>
+        <Wordmark size={46} />
         <Txt variant="h3" style={{ textAlign: 'center' }}>
           Hábitos saudáveis viram um duelo.
         </Txt>
@@ -171,7 +170,7 @@ export default function Onboarding() {
               haptic();
               setFlow(o.id);
             }}
-            style={[styles.option, active && { borderColor: C.primary, backgroundColor: C.primary + '14' }, disabled && { opacity: 0.4 }]}>
+            style={[styles.option, active && { backgroundColor: C.primary + '22', boxShadow: hardShadow(4, C.primary) }, disabled && { opacity: 0.4 }]}>
             <Txt style={{ fontSize: 30 }}>{o.emoji}</Txt>
             <View style={{ flex: 1, gap: 2 }}>
               <Txt variant="h3">{o.title}</Txt>
@@ -275,18 +274,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: C.surface,
     borderWidth: 2,
-    borderColor: C.border,
+    borderColor: C.hairline,
   },
-  color: { width: 32, height: 32, borderRadius: 16 },
-  colorOn: { borderWidth: 3, borderColor: '#fff' },
+  color: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: C.ink },
+  colorOn: { borderWidth: 4, transform: [{ scale: 1.15 }], boxShadow: hardShadow(3) },
   input: {
     backgroundColor: C.surface,
     color: C.text,
     borderRadius: R.md,
     padding: S.lg,
     fontSize: 17,
-    borderWidth: 1,
-    borderColor: C.border,
+    fontFamily: F.medium,
+    borderWidth: STROKE,
+    borderColor: C.ink,
   },
   option: {
     flexDirection: 'row',
@@ -295,8 +295,9 @@ const styles = StyleSheet.create({
     padding: S.lg,
     borderRadius: R.lg,
     backgroundColor: C.surface,
-    borderWidth: 2,
-    borderColor: C.border,
+    borderWidth: STROKE,
+    borderColor: C.ink,
+    boxShadow: hardShadow(4),
   },
-  suggestion: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: R.pill, backgroundColor: C.surface2 },
+  suggestion: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: R.pill, backgroundColor: C.surface, borderWidth: 2, borderColor: C.ink },
 });

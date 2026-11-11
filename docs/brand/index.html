@@ -1,0 +1,93 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Level Fit — Identidade</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1E2A44;--bg:#FFF7E6;--blue:#3E9BDB;--leaf:#5DBB63}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:Fredoka,system-ui,sans-serif}
+.wrap{width:1200px;padding:48px;display:grid;grid-template-columns:420px 1fr;gap:32px}
+.card{background:#fff;border:3px solid var(--ink);border-radius:24px;box-shadow:0 6px 0 var(--ink);padding:28px}
+h1{font-size:64px;margin:0;letter-spacing:1px} h1 span{color:var(--blue);text-shadow:0 5px 0 var(--ink)}
+h2{font-size:14px;letter-spacing:2px;text-transform:uppercase;color:#56627F;margin:0 0 16px}
+.hero{text-align:center;background:radial-gradient(circle at 30% 25%,#6CB8EA,#3E9BDB 55%,#2B7DBA)}
+.hero svg{width:300px;height:300px} .hero p{color:#fff;font-size:20px;margin:8px 0 0}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.sw{border:3px solid var(--ink);border-radius:18px;box-shadow:0 4px 0 var(--ink);padding:14px;height:120px;display:flex;flex-direction:column;justify-content:flex-end}
+.sw b{font-size:18px} .sw span{font-size:13px;opacity:.85} .sw small{font-size:12px;opacity:.75}
+.type .d{font-size:44px;font-weight:700} .type .s{font-size:24px;font-weight:600} .type .b{font-family:system-ui;font-size:16px;color:#56627F}
+.btn{display:inline-block;background:var(--blue);color:#fff;font-weight:700;font-size:18px;padding:14px 28px;border:3px solid var(--ink);border-radius:18px;box-shadow:0 4px 0 var(--ink)}
+.chip{display:inline-block;border:2px solid var(--ink);border-radius:99px;padding:4px 12px;font-weight:600;margin-right:6px}
+.icons{display:flex;gap:20px;align-items:center} .icons img{border-radius:28%;border:3px solid var(--ink);box-shadow:0 5px 0 var(--ink)}
+ul{margin:0;padding-left:20px;font-family:system-ui;line-height:1.6;color:#36415E}
+</style></head><body><div class="wrap">
+<div style="display:flex;flex-direction:column;gap:32px">
+  <div class="card hero"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Kettu, mascote do Level Fit: um kettlebell determinado -->
+  <defs>
+    <clipPath id="body"><ellipse cx="256" cy="318" rx="150" ry="138"/></clipPath>
+  </defs>
+  <g stroke="#1E2A44" stroke-linejoin="round" stroke-linecap="round">
+    <!-- folha-broto -->
+    <path d="M256 96 C256 80 258 70 262 60" fill="none" stroke-width="9"/>
+    <path d="M262 62 C280 30 322 28 336 40 C322 66 290 76 262 62 Z" fill="#5DBB63" stroke-width="8"/>
+    <path d="M262 62 C300 52 316 46 332 41" fill="none" stroke="#3E8E47" stroke-width="5"/>
+    <path d="M258 70 C240 46 210 44 198 54 C210 76 236 82 258 70 Z" fill="#7FD07F" stroke-width="8"/>
+    <!-- alça -->
+    <path d="M176 214 C170 92 342 92 336 214" fill="none" stroke-width="62"/>
+    <path d="M176 214 C170 92 342 92 336 214" fill="none" stroke="#8EA6DE" stroke-width="40"/>
+    <path d="M190 150 C206 116 236 106 256 106" fill="none" stroke="#C9D6F2" stroke-width="10"/>
+    <!-- pés -->
+    <ellipse cx="192" cy="450" rx="46" ry="26" fill="#5E78B8" stroke-width="10"/>
+    <ellipse cx="320" cy="450" rx="46" ry="26" fill="#5E78B8" stroke-width="10"/>
+    <!-- braços (um flexionando) -->
+    <path d="M136 330 C104 340 86 356 80 380" fill="none" stroke-width="54"/>
+    <path d="M136 330 C104 340 86 356 80 380" fill="none" stroke="#8EA6DE" stroke-width="34"/>
+    <circle cx="80" cy="384" r="24" fill="#8EA6DE" stroke-width="10"/>
+    <path d="M376 318 C420 316 440 290 440 248" fill="none" stroke-width="56"/>
+    <path d="M376 318 C420 316 440 290 440 248" fill="none" stroke="#8EA6DE" stroke-width="36"/>
+    <path d="M414 290 C420 276 428 270 438 270" fill="none" stroke="#6F88C4" stroke-width="10"/>
+    <circle cx="440" cy="236" r="28" fill="#3E9BDB" stroke-width="10"/>
+    <path d="M428 222 L452 222" fill="none" stroke-width="5"/>
+    <!-- corpo -->
+    <ellipse cx="256" cy="318" rx="150" ry="138" fill="#8EA6DE" stroke="none"/>
+    <g clip-path="url(#body)" stroke="none">
+      <ellipse cx="318" cy="388" rx="170" ry="120" fill="#6F88C4"/>
+      <ellipse cx="196" cy="236" rx="46" ry="26" fill="#C9D6F2" transform="rotate(-25 196 236)"/>
+    </g>
+    <ellipse cx="256" cy="318" rx="150" ry="138" fill="none" stroke-width="12"/>
+    <!-- barriga -->
+    <ellipse cx="256" cy="398" rx="82" ry="46" fill="#F5E6B8" stroke-width="8"/>
+    <path d="M264 368 L242 400 L260 400 L250 428 L280 390 L262 390 L274 368 Z" fill="#3E9BDB" stroke-width="5"/>
+    <!-- bochechas -->
+    <ellipse cx="166" cy="330" rx="20" ry="12" fill="#F48FB1" stroke="none"/>
+    <ellipse cx="346" cy="330" rx="20" ry="12" fill="#F48FB1" stroke="none"/>
+    <!-- olhos -->
+    <ellipse cx="208" cy="294" rx="24" ry="28" fill="#FFFFFF" stroke-width="7"/>
+    <ellipse cx="304" cy="294" rx="24" ry="28" fill="#FFFFFF" stroke-width="7"/>
+    <circle cx="216" cy="300" r="14" fill="#1E2A44" stroke="none"/>
+    <circle cx="296" cy="300" r="14" fill="#1E2A44" stroke="none"/>
+    <circle cx="221" cy="294" r="5" fill="#FFFFFF" stroke="none"/>
+    <circle cx="301" cy="294" r="5" fill="#FFFFFF" stroke="none"/>
+    <!-- sobrancelhas determinadas -->
+    <path d="M180 256 L232 270" fill="none" stroke-width="11"/>
+    <path d="M332 256 L280 270" fill="none" stroke-width="11"/>
+    <!-- boca -->
+    <path d="M234 330 Q256 352 278 330 Z" fill="#1E2A44" stroke-width="6"/>
+    <path d="M246 340 Q256 348 266 340" fill="#F48FB1" stroke="none"/>
+  </g>
+</svg>
+<p>Kettu — o kettlebell que nunca pula treino</p></div>
+  <div class="card"><h2>Ícone do app</h2><div class="icons"><img src="../../assets/images/icon.png" width="120"><img src="../../assets/images/icon.png" width="72"><img src="../../assets/images/icon.png" width="44"></div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:32px">
+  <div class="card"><h1>LEVEL <span>FIT</span></h1><p style="font-size:22px;margin:8px 0 0">Hábitos saudáveis viram um duelo.</p></div>
+  <div class="card"><h2>Paleta</h2><div class="grid"><div class="sw" style="background:#1E2A44;color:#fff"><b>Tinta</b><span>#1E2A44</span><small>Contorno, texto</small></div><div class="sw" style="background:#FFF7E6;color:#1E2A44"><b>Creme papel</b><span>#FFF7E6</span><small>Fundo</small></div><div class="sw" style="background:#3E9BDB;color:#fff"><b>Azul aura</b><span>#3E9BDB</span><small>Primária, botões</small></div><div class="sw" style="background:#8EA6DE;color:#1E2A44"><b>Periwinkle</b><span>#8EA6DE</span><small>Corpo do Kettu</small></div><div class="sw" style="background:#5DBB63;color:#fff"><b>Broto</b><span>#5DBB63</span><small>Sucesso, meta feita</small></div><div class="sw" style="background:#F5E6B8;color:#1E2A44"><b>Barriga</b><span>#F5E6B8</span><small>Destaques suaves</small></div><div class="sw" style="background:#F48FB1;color:#1E2A44"><b>Bochecha</b><span>#F48FB1</span><small>Jogador 2, carinho</small></div><div class="sw" style="background:#F5C84C;color:#1E2A44"><b>Troféu</b><span>#F5C84C</span><small>Vitórias, aposta</small></div></div></div>
+  <div class="card type"><h2>Tipografia & componentes</h2>
+    <div class="d">Fredoka Bold — títulos e placar 120</div><div class="s">Fredoka SemiBold — rótulos e abas</div>
+    <div class="b" style="margin:8px 0 20px">Fonte do sistema — textos corridos</div>
+    <span class="btn">Postar prova (+15 pts)</span> &nbsp; <span class="chip" style="background:#F5C84C">⚡ Desafio 2x</span><span class="chip" style="background:#5DBB6355">✅ Meta feita</span></div>
+  <div class="card"><h2>Princípios</h2><ul>
+    <li><b>Traço de anime:</b> contorno grosso em tinta (2,5px) em cards, botões e avatares.</li>
+    <li><b>Sombra chapada:</b> deslocada para baixo, sem desfoque; botões “afundam” ao tocar.</li>
+    <li><b>Formas redondas e amigáveis:</b> cantos de 18–24px, nada pontudo.</li>
+    <li><b>Cor com propósito:</b> azul = ação, verde = conquista, dourado = vitória.</li></ul></div>
+</div></div></body></html>

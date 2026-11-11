@@ -4,7 +4,7 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 import { useCelebration } from '@/components/CelebrationHost';
 import { Avatar, Button, Card, Chip, haptic, Row, Screen, Segmented, Txt } from '@/components/ui';
-import { C, R, S } from '@/constants/theme';
+import { C, hardShadow, R, S, STROKE } from '@/constants/theme';
 import { periodKey } from '@/domain/dates';
 import type { Period, PeriodResult } from '@/domain/types';
 import { useScoreBook, useToday } from '@/hooks/useScoreBook';
@@ -35,10 +35,10 @@ function Podium({ result }: { result: PeriodResult }) {
               {s.player.name}
             </Txt>
             <View style={[styles.block, { height: h, backgroundColor: s.player.color + (isLeader ? 'DD' : '66') }]}>
-              <Txt variant="number" color={C.bg}>
+              <Txt variant="number" color={C.ink}>
                 {s.points}
               </Txt>
-              <Txt variant="small" color={C.bg}>
+              <Txt variant="small" color={C.ink}>
                 pts
               </Txt>
             </View>
@@ -84,7 +84,7 @@ export default function RankingScreen() {
         </Row>
         {duel.stake && period !== 'day' ? (
           <View style={styles.stake}>
-            <Txt variant="small" color={C.gold}>
+            <Txt variant="small" color={C.ink}>
               💸 Aposta: quem perder paga {duel.stake}
             </Txt>
           </View>
@@ -151,8 +151,8 @@ export default function RankingScreen() {
 const styles = StyleSheet.create({
   podium: { flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', gap: S.lg, paddingTop: S.sm },
   podiumCol: { alignItems: 'center', gap: 6, width: 120 },
-  block: { width: '100%', borderTopLeftRadius: R.md, borderTopRightRadius: R.md, alignItems: 'center', paddingTop: S.sm },
-  stake: { backgroundColor: C.gold + '1A', borderRadius: R.sm, padding: S.sm, alignItems: 'center' },
+  block: { width: '100%', borderTopLeftRadius: R.md, borderTopRightRadius: R.md, alignItems: 'center', paddingTop: S.sm, borderWidth: STROKE, borderBottomWidth: 0, borderColor: C.ink },
+  stake: { backgroundColor: C.gold + '40', borderRadius: R.sm, padding: S.sm, alignItems: 'center' },
   histRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -160,7 +160,8 @@ const styles = StyleSheet.create({
     backgroundColor: C.surface,
     borderRadius: R.md,
     padding: S.md,
-    borderWidth: 1,
-    borderColor: C.border,
+    borderWidth: STROKE,
+    borderColor: C.ink,
+    boxShadow: hardShadow(3),
   },
 });

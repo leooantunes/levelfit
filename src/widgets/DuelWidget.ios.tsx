@@ -7,11 +7,11 @@ import type { DuelWidgetProps } from './types';
 const DuelWidget = (props: DuelWidgetProps, environment: WidgetEnvironment) => {
   'widget';
   // Tudo precisa estar declarado aqui dentro: o widget roda em um runtime isolado.
-  const BG = '#0A0E1A';
-  const GREEN = '#7CFF6B';
-  const BLUE = '#38BDF8';
-  const PINK = '#F472B6';
-  const DIM = '#9AA3BF';
+  const BG = '#1E2A44';
+  const GREEN = '#7FD07F';
+  const BLUE = '#6CB8EA';
+  const PINK = '#F48FB1';
+  const DIM = '#B8C2DE';
   const progress = props.total > 0 ? props.done / props.total : 0;
   const family = environment.widgetFamily;
 

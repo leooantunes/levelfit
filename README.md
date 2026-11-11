@@ -2,6 +2,8 @@
 
 Duelo de hábitos saudáveis entre 2 pessoas. O app sugere metas, cada prova de hábito é uma **foto**, e existe ranking **diário, semanal e mensal** com animação de vitória para o vencedor. O placar também aparece num **widget** na tela inicial (iOS e Android).
 
+Identidade visual em [`docs/brand`](docs/brand/brand-board.png), com o mascote **Kettu**.
+
 Feito com **React Native + Expo SDK 58** (Expo Router, Reanimated, `expo-widgets`).
 
 ## Funcionalidades

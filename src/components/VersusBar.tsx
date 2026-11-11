@@ -77,6 +77,6 @@ export function VersusBar({
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: S.sm },
   side: { flexDirection: 'row', alignItems: 'center', gap: S.sm, flex: 1 },
-  bar: { flexDirection: 'row', height: 14, borderRadius: R.pill, overflow: 'hidden', backgroundColor: C.surface2 },
-  divider: { width: 3, backgroundColor: C.bg },
+  bar: { flexDirection: 'row', height: 18, borderRadius: R.pill, overflow: 'hidden', backgroundColor: C.surface2, borderWidth: 2.5, borderColor: C.ink },
+  divider: { width: 3, backgroundColor: C.ink },
 });

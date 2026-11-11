@@ -42,7 +42,7 @@ export default function GoalsScreen() {
             onChangeText={setStake}
             placeholder="ex.: um açaí, o jantar, lavar a louça…"
             placeholderTextColor={C.textMuted}
-            style={{ backgroundColor: C.surface, color: C.text, borderRadius: R.md, padding: S.lg, borderWidth: 1, borderColor: C.border }}
+            style={{ backgroundColor: C.surface, color: C.text, borderRadius: R.md, padding: S.lg, borderWidth: 2.5, borderColor: C.ink }}
           />
         </View>
         <GoalPicker selected={habitIds} onChange={setHabitIds} />

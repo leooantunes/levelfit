@@ -1,4 +1,5 @@
-import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
+import { Fredoka_500Medium, Fredoka_600SemiBold, Fredoka_700Bold, useFonts } from '@expo-google-fonts/fredoka';
+import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -14,8 +15,8 @@ import { useWidgetSync } from '@/widgets/useWidgetSync';
 SplashScreen.preventAutoHideAsync();
 
 const theme = {
-  ...DarkTheme,
-  colors: { ...DarkTheme.colors, background: C.bg, card: C.bg, primary: C.primary, text: C.text, border: C.border },
+  ...DefaultTheme,
+  colors: { ...DefaultTheme.colors, background: C.bg, card: C.surface, primary: C.primary, text: C.text, border: C.hairline },
 };
 
 function useOnlineSync() {
@@ -46,21 +47,23 @@ function useReminders() {
 export default function RootLayout() {
   const hydrated = useGame((s) => s.hydrated);
   const hasDuel = useGame((s) => !!s.duel);
+  const [fontsLoaded, fontError] = useFonts({ Fredoka_500Medium, Fredoka_600SemiBold, Fredoka_700Bold });
+  const ready = hydrated && (fontsLoaded || !!fontError);
 
   useEffect(() => {
-    if (hydrated) SplashScreen.hideAsync();
-  }, [hydrated]);
+    if (ready) SplashScreen.hideAsync();
+  }, [ready]);
 
   useOnlineSync();
   useReminders();
   useWidgetSync();
 
-  if (!hydrated) return null;
+  if (!ready) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: C.bg }}>
       <ThemeProvider value={theme}>
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bg } }}>
           <Stack.Protected guard={hasDuel}>
             <Stack.Screen name="(tabs)" />

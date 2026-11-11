@@ -1,14 +1,14 @@
 import { NativeTabs } from 'expo-router/native-tabs';
 
-import { C } from '@/constants/theme';
+import { C, F } from '@/constants/theme';
 
 export default function TabsLayout() {
   return (
     <NativeTabs
       backgroundColor={C.surface}
       indicatorColor={C.primary + '33'}
-      tintColor={C.primary}
-      labelStyle={{ color: C.textDim, selected: { color: C.primary } }}>
+      tintColor={C.primaryDark}
+      labelStyle={{ color: C.textMuted, fontFamily: F.semibold, selected: { color: C.ink } }}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Hoje</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'flame', selected: 'flame.fill' }} md="local_fire_department" />

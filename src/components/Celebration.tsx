@@ -13,7 +13,7 @@ import Animated, {
   ZoomIn,
 } from 'react-native-reanimated';
 
-import { C, R, S } from '@/constants/theme';
+import { C, hardShadow, R, S, STROKE } from '@/constants/theme';
 import type { PeriodResult } from '@/domain/types';
 
 import { Confetti } from './Confetti';
@@ -104,10 +104,10 @@ export function Celebration({
 
           {winner && loser && stake && period !== 'day' ? (
             <Animated.View entering={FadeInUp.delay(1100)} style={styles.stake}>
-              <Txt variant="label" color={C.bg}>
+              <Txt variant="label" color={C.ink}>
                 Aposta
               </Txt>
-              <Txt variant="h3" color={C.bg} style={{ textAlign: 'center' }}>
+              <Txt variant="h3" color={C.ink} style={{ textAlign: 'center' }}>
                 {loser.name} paga: {stake} 💸
               </Txt>
             </Animated.View>
@@ -123,7 +123,7 @@ export function Celebration({
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(5,8,16,0.94)', justifyContent: 'center' },
+  overlay: { flex: 1, backgroundColor: 'rgba(255,247,230,0.97)', justifyContent: 'center' },
   center: { padding: S.xl, alignItems: 'center', gap: S.xl },
   trophyWrap: { width: 200, height: 200, alignItems: 'center', justifyContent: 'center' },
   glow: { position: 'absolute', width: 200, height: 200, borderRadius: 100 },
@@ -134,8 +134,19 @@ const styles = StyleSheet.create({
     borderRadius: R.lg,
     padding: S.lg,
     gap: S.md,
-    borderWidth: 1,
-    borderColor: C.border,
+    borderWidth: STROKE,
+    borderColor: C.ink,
+    boxShadow: hardShadow(5),
   },
-  stake: { backgroundColor: C.gold, borderRadius: R.md, padding: S.md, alignSelf: 'stretch', alignItems: 'center', gap: 2 },
+  stake: {
+    backgroundColor: C.gold,
+    borderRadius: R.md,
+    padding: S.md,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    gap: 2,
+    borderWidth: STROKE,
+    borderColor: C.ink,
+    boxShadow: hardShadow(4),
+  },
 });

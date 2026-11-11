@@ -85,7 +85,7 @@ export default function CheckinScreen() {
             </Txt>
             <Row>
               <Chip label={`+${pts} pts`} color={C.primary + '22'} textColor={C.primary} />
-              {isChallenge ? <Chip label="⚡ Desafio 2x" color={C.gold} textColor={C.bg} /> : null}
+              {isChallenge ? <Chip label="⚡ Desafio 2x" color={C.gold} textColor={C.ink} /> : null}
               {habit.maxPerDay > 1 ? <Chip label={`${mine.length}/${habit.maxPerDay} hoje`} /> : null}
             </Row>
           </View>
@@ -170,7 +170,7 @@ export default function CheckinScreen() {
           <Confetti count={40} />
           <Animated.View entering={ZoomIn.springify()} style={{ alignItems: 'center', gap: S.sm }}>
             <Txt style={{ fontSize: 80 }}>{habit.emoji}</Txt>
-            <Txt variant="title" color={C.primary} style={{ fontSize: 44 }}>
+            <Txt variant="title" color={C.leafDark} style={{ fontSize: 48 }}>
               +{pts} pts!
             </Txt>
             <Txt variant="h3">Prova registrada 💪</Txt>
@@ -183,18 +183,18 @@ export default function CheckinScreen() {
 
 const styles = StyleSheet.create({
   content: { padding: S.lg, gap: S.lg, paddingBottom: 48 },
-  grabber: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: C.border },
-  preview: { width: '100%', aspectRatio: 4 / 5, borderRadius: R.md, backgroundColor: C.surface2 },
-  placeholder: { alignItems: 'center', justifyContent: 'center', gap: S.sm, borderWidth: 2, borderStyle: 'dashed', borderColor: C.border },
+  grabber: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: C.hairline },
+  preview: { width: '100%', aspectRatio: 4 / 5, borderRadius: R.md, backgroundColor: C.surface2, borderWidth: 2, borderColor: C.ink },
+  placeholder: { alignItems: 'center', justifyContent: 'center', gap: S.sm, borderWidth: 2, borderStyle: 'dashed', borderColor: C.textMuted },
   input: {
     backgroundColor: C.surface,
     color: C.text,
     borderRadius: R.md,
     padding: S.lg,
     fontSize: 15,
-    borderWidth: 1,
-    borderColor: C.border,
+    borderWidth: 2,
+    borderColor: C.ink,
   },
   thumb: { width: 48, height: 48, borderRadius: R.sm },
-  success: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(5,8,16,0.92)', alignItems: 'center', justifyContent: 'center' },
+  success: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(255,247,230,0.96)', alignItems: 'center', justifyContent: 'center' },
 });

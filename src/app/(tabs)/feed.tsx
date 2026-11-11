@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { FlatList, Platform, RefreshControl, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Kettu } from '@/components/Brand';
 import { ProofCard } from '@/components/ProofCard';
 import { Card, Segmented, Txt } from '@/components/ui';
 import { C, S } from '@/constants/theme';
@@ -64,7 +65,7 @@ export default function FeedScreen() {
         }
         ListEmptyComponent={
           <Card style={{ alignItems: 'center' }}>
-            <Txt style={{ fontSize: 40 }}>📸</Txt>
+            <Kettu size={110} />
             <Txt variant="h3">Nenhuma prova ainda</Txt>
             <Txt variant="dim" style={{ textAlign: 'center' }}>
               Cada meta cumprida vira uma foto aqui. Seu rival pode reagir — ou contestar se achar que é migué!

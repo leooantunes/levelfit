@@ -54,7 +54,7 @@ export default function TodayScreen() {
       }>
       <Row style={{ justifyContent: 'space-between' }}>
         <View>
-          <Txt variant="label" color={C.primary}>
+          <Txt variant="label" color={C.primaryDark}>
             ⚡ Level Fit · {duel.name}
           </Txt>
           <Txt variant="title">{periodLabel('day', today, today)}</Txt>
@@ -62,8 +62,8 @@ export default function TodayScreen() {
         {mode === 'online' ? (
           <Chip
             label={syncError ? '⚠️ offline' : syncing ? '⟳ sincronizando' : '● online'}
-            color={syncError ? C.warning + '33' : C.primary + '22'}
-            textColor={syncError ? C.warning : C.primary}
+            color={syncError ? C.warning + '33' : C.leaf + '33'}
+            textColor={C.ink}
           />
         ) : null}
       </Row>
@@ -113,12 +113,12 @@ export default function TodayScreen() {
           </Row>
           <ProgressBar value={goals.length ? done / goals.length : 0} />
           <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
-            <Chip label={streak === 1 ? '🔥 1 dia de sequência' : `🔥 ${streak} dias seguidos`} color={C.warning + '22'} textColor={C.warning} />
-            <Chip label={`Combo x${nextMultiplier}`} color={C.accent + '33'} textColor="#C4B5FD" />
+            <Chip label={streak === 1 ? '🔥 1 dia de sequência' : `🔥 ${streak} dias seguidos`} color={C.warning + '33'} textColor={C.ink} />
+            <Chip label={`Combo x${nextMultiplier}`} color={C.accent + '33'} textColor={C.accent} />
             <Chip
               label={myDay.perfect ? '💯 Bônus garantido' : `💯 +${PERFECT_DAY_BONUS} se completar tudo`}
-              color={C.gold + '22'}
-              textColor={C.gold}
+              color={C.gold + '55'}
+              textColor={C.ink}
             />
           </Row>
         </Card>
@@ -128,7 +128,7 @@ export default function TodayScreen() {
         <Row style={{ justifyContent: 'space-between' }}>
           <Txt variant="h2">Suas metas</Txt>
           <Pressable onPress={() => router.push('/goals')} hitSlop={10}>
-            <Txt variant="dim" color={C.primary}>
+            <Txt variant="h3" color={C.primaryDark}>
               Editar
             </Txt>
           </Pressable>
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     padding: S.sm,
     borderRadius: R.md,
     borderWidth: 2,
-    borderColor: C.border,
+    borderColor: C.hairline,
   },
-  tip: { padding: S.md, borderRadius: R.md, backgroundColor: C.surface, opacity: 0.8 },
+  tip: { padding: S.md, borderRadius: R.md, backgroundColor: C.surface2, borderWidth: 2, borderColor: C.hairline, borderStyle: 'dashed' },
 });

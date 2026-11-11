@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { C, R, S } from '@/constants/theme';
+import { C, hardShadow, R, S, STROKE } from '@/constants/theme';
 import { formatTime } from '@/domain/dates';
 import { getHabit } from '@/domain/habits';
 import type { Checkin, Player } from '@/domain/types';
@@ -89,10 +89,11 @@ const styles = StyleSheet.create({
     borderRadius: R.lg,
     padding: S.md,
     gap: S.md,
-    borderWidth: 1,
-    borderColor: C.border,
+    borderWidth: STROKE,
+    borderColor: C.ink,
+    boxShadow: hardShadow(5),
   },
-  photo: { width: '100%', aspectRatio: 4 / 5, borderRadius: R.md, backgroundColor: C.surface2 },
+  photo: { width: '100%', aspectRatio: 4 / 5, borderRadius: R.md, backgroundColor: C.surface2, borderWidth: 2, borderColor: C.ink },
   reaction: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -102,5 +103,5 @@ const styles = StyleSheet.create({
     borderRadius: R.pill,
     backgroundColor: C.surface2,
   },
-  reactionActive: { backgroundColor: C.primary + '33', borderWidth: 1, borderColor: C.primary },
+  reactionActive: { backgroundColor: C.primary + '33', borderWidth: 2, borderColor: C.ink },
 });
