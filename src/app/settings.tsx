@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import { AvatarPicker, Input } from '@/components/ProfileFields';
 import { Avatar, Button, Card, haptic, Row, Screen, Txt } from '@/components/ui';
@@ -68,7 +68,9 @@ function HealthCard() {
       <Row style={{ justifyContent: 'space-between' }}>
         <View style={{ flex: 1 }}>
           <Txt variant="h3">⌚ Relógio</Txt>
-          <Txt variant="small">Via {HEALTH_SOURCE}: Apple Watch, Garmin, Galaxy Watch, Fitbit e outros</Txt>
+          <Txt variant="small">
+            Via {HEALTH_SOURCE}: {Platform.OS === 'ios' ? 'Apple Watch, Garmin, Fitbit' : 'Galaxy Watch, Pixel Watch, Garmin, Fitbit'} e outros
+          </Txt>
         </View>
         <Switch value={enabled} disabled={busy} onValueChange={toggle} trackColor={{ true: C.leaf, false: C.hairline }} />
       </Row>
@@ -77,10 +79,14 @@ function HealthCard() {
       </Txt>
       <Txt variant="small">{metas.join('  ·  ')}</Txt>
       {enabled ? (
-        <Row>
-          <Button title="Conferir agora" variant="secondary" loading={busy} onPress={checkNow} style={{ flex: 1 }} />
-          <Button title="Permissões" variant="ghost" onPress={openHealthSettings} style={{ flex: 1 }} />
-        </Row>
+        <>
+          <Button title="Conferir agora" icon="⌚" variant="secondary" loading={busy} onPress={checkNow} />
+          <Pressable onPress={openHealthSettings} hitSlop={8} style={{ alignSelf: 'center' }}>
+            <Txt variant="small" color={C.primaryDark}>
+              Gerenciar permissões no {HEALTH_SOURCE}
+            </Txt>
+          </Pressable>
+        </>
       ) : null}
     </Card>
   );
