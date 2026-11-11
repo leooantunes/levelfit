@@ -1,0 +1,93 @@
+{
+  "expo": {
+    "name": "Level Fit",
+    "slug": "level-fit",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "levelfit",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.levelfit.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "O Level Fit usa a câmera para você tirar a foto de prova dos seus hábitos.",
+        "NSPhotoLibraryUsageDescription": "O Level Fit acessa suas fotos para você escolher a prova de um hábito."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0A0E1A",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.levelfit.app"
+    },
+    "web": {
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0A0E1A",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 76
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "O Level Fit usa a câmera para você tirar a foto de prova dos seus hábitos.",
+          "photosPermission": "O Level Fit acessa suas fotos para você escolher a prova de um hábito."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#7CFF6B"
+        }
+      ],
+      [
+        "expo-widgets",
+        {
+          "enableAndroid": true,
+          "widgets": [
+            {
+              "name": "DuelWidget",
+              "displayName": "Level Fit — Placar",
+              "description": "Placar do duelo de hoje e suas metas",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium",
+                  "systemLarge",
+                  "accessoryCircular",
+                  "accessoryRectangular"
+                ],
+                "initialLayout": "./src/widgets/DuelWidget.ios.tsx"
+              },
+              "android": {
+                "targetCellWidth": 4,
+                "targetCellHeight": 2,
+                "minWidth": 250,
+                "minHeight": 110,
+                "initialLayout": "./src/widgets/DuelWidget.android.tsx"
+              }
+            }
+          ]
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "backgroundColor": "#0A0E1A"
+  }
+}
