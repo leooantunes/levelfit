@@ -3,7 +3,7 @@ import { Alert, Pressable, Share, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 
 import { Avatar, Button, Card, Chip, haptic, ProgressBar, Row, Screen, Txt } from '@/components/ui';
-import { C, R, S } from '@/constants/theme';
+import { C, hardShadow, R, S, STROKE } from '@/constants/theme';
 import { achievementsFor, levelInfo } from '@/domain/progression';
 import { usePlayers, useScoreBook, useToday } from '@/hooks/useScoreBook';
 import { useActiveCheckins, useActiveDuel, useGame } from '@/store/useGame';
@@ -66,7 +66,7 @@ export default function ProfileScreen() {
           <Avatar emoji={me.avatar} color={me.color} size={96} />
         </Animated.View>
         <Txt variant="title">{me.name}</Txt>
-        <Chip label={`Nível ${lvl.level} · ${lvl.title}`} color={C.accent + '33'} textColor="#C4B5FD" />
+        <Chip label={`Nível ${lvl.level} · ${lvl.title}`} color={C.accent + '33'} textColor={C.accent} />
       </Animated.View>
 
       <Card>
@@ -137,7 +137,7 @@ export default function ProfileScreen() {
         {opponent ? null : (
           <Pressable onPress={share} style={styles.code}>
             <Txt variant="label">Código de convite</Txt>
-            <Txt variant="title" color={C.primary} style={{ letterSpacing: 6 }}>
+            <Txt variant="title" color={C.primaryDark} style={{ letterSpacing: 6 }}>
               {duel.code}
             </Txt>
             <Txt variant="small">Toque para compartilhar</Txt>
@@ -161,8 +161,9 @@ const styles = StyleSheet.create({
     padding: S.md,
     alignItems: 'center',
     gap: 2,
-    borderWidth: 1,
-    borderColor: C.border,
+    borderWidth: STROKE,
+    borderColor: C.ink,
+    boxShadow: hardShadow(4),
   },
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: S.sm },
   badge: { width: '30%', flexGrow: 1, alignItems: 'center', gap: 4, padding: S.sm, borderRadius: R.md, backgroundColor: C.surface2 },

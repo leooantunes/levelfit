@@ -2,14 +2,14 @@ import type { ScoreBook } from './scoring';
 import type { Checkin } from './types';
 
 const TITLES = [
-  'Sofá Lover',
-  'Aquecendo',
-  'Em Movimento',
-  'Disciplinado',
-  'Atleta',
-  'Máquina',
-  'Monstro Fit',
-  'Lenda',
+  'Saco de Pancada',
+  'Novato',
+  'Amador',
+  'Peso-Pena',
+  'Peso-Médio',
+  'Peso-Pesado',
+  'Campeão',
+  'Lenda do Ringue',
 ];
 
 /** XP necessário para alcançar o nível `level` (nível 1 = 0 XP). */

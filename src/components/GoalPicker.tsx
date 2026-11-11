@@ -1,6 +1,6 @@
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { C, R, S } from '@/constants/theme';
+import { C, hardShadow, R, S, STROKE } from '@/constants/theme';
 import { CATEGORY_LABEL, GOAL_PRESETS, HABITS } from '@/domain/habits';
 import type { HabitCategory } from '@/domain/types';
 
@@ -34,7 +34,7 @@ export function GoalPicker({ selected, onChange }: { selected: string[]; onChang
                   haptic();
                   onChange(p.habitIds);
                 }}
-                style={[styles.preset, active && { borderColor: C.primary, backgroundColor: C.primary + '18' }]}>
+                style={[styles.preset, active && { backgroundColor: C.primary + '22', boxShadow: hardShadow(4, C.primary) }]}>
                 <Txt style={{ fontSize: 26 }}>{p.emoji}</Txt>
                 <Txt variant="h3">{p.title}</Txt>
                 <Txt variant="small">{p.description}</Txt>
@@ -48,7 +48,7 @@ export function GoalPicker({ selected, onChange }: { selected: string[]; onChang
         <Txt variant="dim">
           {selected.length}/{MAX_GOALS} metas
         </Txt>
-        <Txt variant="dim" color={C.primary}>
+        <Txt variant="dim" color={C.leafDark}>
           até {dailyMax} pts/dia
         </Txt>
       </Row>
@@ -67,8 +67,8 @@ export function GoalPicker({ selected, onChange }: { selected: string[]; onChang
                     +{h.points} pts{h.maxPerDay > 1 ? ` (até ${h.maxPerDay}x/dia)` : ''}
                   </Txt>
                 </View>
-                <View style={[styles.check, on && { backgroundColor: C.primary, borderColor: C.primary }]}>
-                  {on ? <Txt style={{ color: C.bg, fontWeight: '900' }}>✓</Txt> : null}
+                <View style={[styles.check, on && { backgroundColor: C.leaf, borderColor: C.ink }]}>
+                  {on ? <Txt style={{ color: C.onColor, fontWeight: '900' }}>✓</Txt> : null}
                 </View>
               </Pressable>
             );
@@ -86,8 +86,9 @@ const styles = StyleSheet.create({
     gap: 4,
     borderRadius: R.md,
     backgroundColor: C.surface,
-    borderWidth: 2,
-    borderColor: C.border,
+    borderWidth: STROKE,
+    borderColor: C.ink,
+    boxShadow: hardShadow(4),
   },
   item: {
     flexDirection: 'row',
@@ -96,16 +97,16 @@ const styles = StyleSheet.create({
     padding: S.md,
     borderRadius: R.md,
     backgroundColor: C.surface,
-    borderWidth: 1,
-    borderColor: C.border,
+    borderWidth: 2,
+    borderColor: C.hairline,
   },
-  itemOn: { borderColor: C.primary + '88' },
+  itemOn: { borderColor: C.ink, backgroundColor: '#EFFAEF', boxShadow: hardShadow(3, C.leaf) },
   check: {
     width: 26,
     height: 26,
     borderRadius: 13,
     borderWidth: 2,
-    borderColor: C.border,
+    borderColor: C.textMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },

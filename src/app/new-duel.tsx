@@ -44,7 +44,7 @@ export default function NewDuelScreen() {
 
   const steps = [
     <View key="goals" style={{ gap: S.lg }}>
-      <Txt variant="title">Escolha as metas</Txt>
+      <Txt variant="title">Regras da luta</Txt>
       <Txt variant="dim">Sugerimos um pacote equilibrado. Ajuste do seu jeito. Todo dia também aparece um ⚡ desafio bônus valendo 2x.</Txt>
       <GoalPicker selected={habitIds} onChange={setHabitIds} />
       <Button
@@ -75,7 +75,7 @@ export default function NewDuelScreen() {
         </Txt>
       </Card>
       <Txt variant="small">Depois de criar, você recebe um código de 6 letras para mandar pro seu rival.</Txt>
-      <Button title="Criar duelo ⚔️" onPress={finish} loading={busy} />
+      <Button title="Soar o gongo! 🔔" onPress={finish} loading={busy} />
     </View>,
   ];
 

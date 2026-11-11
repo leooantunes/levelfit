@@ -73,7 +73,7 @@ export default function SettingsScreen() {
           <Switch
             value={reminders.enabled}
             onValueChange={(v) => setReminders({ enabled: v })}
-            trackColor={{ true: C.primary, false: C.surface2 }}
+            trackColor={{ true: C.leaf, false: C.hairline }}
           />
         </Row>
         {reminders.enabled ? (
@@ -86,7 +86,7 @@ export default function SettingsScreen() {
                   setReminders({ hour: h, minute: 0 });
                 }}
                 style={[styles.hour, reminders.hour === h && { backgroundColor: C.primary }]}>
-                <Txt variant="h3" color={reminders.hour === h ? C.bg : C.text}>
+                <Txt variant="h3" color={reminders.hour === h ? C.onColor : C.text}>
                   {h}h
                 </Txt>
               </Pressable>

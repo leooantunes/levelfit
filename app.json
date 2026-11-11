@@ -6,9 +6,8 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "levelfit",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.levelfit.app",
       "supportsTablet": false,
       "infoPlist": {
@@ -18,7 +17,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0A0E1A",
+        "backgroundColor": "#2B1B17",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -35,9 +34,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0A0E1A",
+          "backgroundColor": "#FFF3E3",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 200
         }
       ],
       [
@@ -50,7 +49,7 @@
       [
         "expo-notifications",
         {
-          "color": "#7CFF6B"
+          "color": "#F26B1D"
         }
       ],
       [
@@ -82,12 +81,13 @@
             }
           ]
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "backgroundColor": "#0A0E1A"
+    "backgroundColor": "#FFF3E3"
   }
 }

@@ -1,4 +1,6 @@
-import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
+import { Bungee_400Regular } from '@expo-google-fonts/bungee';
+import { Rubik_500Medium, Rubik_600SemiBold, Rubik_800ExtraBold, useFonts } from '@expo-google-fonts/rubik';
+import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -14,8 +16,8 @@ import { useWidgetSync } from '@/widgets/useWidgetSync';
 SplashScreen.preventAutoHideAsync();
 
 const theme = {
-  ...DarkTheme,
-  colors: { ...DarkTheme.colors, background: C.bg, card: C.bg, primary: C.primary, text: C.text, border: C.border },
+  ...DefaultTheme,
+  colors: { ...DefaultTheme.colors, background: C.bg, card: C.surface, primary: C.primary, text: C.text, border: C.hairline },
 };
 
 /** Confere a sessão ao abrir e sai da conta se ela for encerrada. */
@@ -63,22 +65,24 @@ function useReminders() {
 export default function RootLayout() {
   const hydrated = useGame((s) => s.hydrated);
   const signedIn = useGame((s) => !!s.account);
+  const [fontsLoaded, fontError] = useFonts({ Bungee_400Regular, Rubik_500Medium, Rubik_600SemiBold, Rubik_800ExtraBold });
+  const ready = hydrated && (fontsLoaded || !!fontError);
 
   useEffect(() => {
-    if (hydrated) SplashScreen.hideAsync();
-  }, [hydrated]);
+    if (ready) SplashScreen.hideAsync();
+  }, [ready]);
 
   useSession();
   useOnlineSync();
   useReminders();
   useWidgetSync();
 
-  if (!hydrated) return null;
+  if (!ready) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: C.bg }}>
       <ThemeProvider value={theme}>
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bg } }}>
           <Stack.Protected guard={signedIn}>
             <Stack.Screen name="index" />

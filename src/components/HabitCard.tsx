@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { C, R, S } from '@/constants/theme';
+import { C, hardShadow, R, S, STROKE } from '@/constants/theme';
 import { CHALLENGE_MULTIPLIER } from '@/domain/habits';
 import type { Checkin, Habit, Player } from '@/domain/types';
 
@@ -57,7 +57,7 @@ export function HabitCard({
           done && styles.done,
           pressed && { transform: [{ scale: 0.98 }] },
         ]}>
-        <View style={[styles.emojiBox, done && { backgroundColor: C.primary + '33' }]}>
+        <View style={[styles.emojiBox, done && { backgroundColor: C.leaf + '40' }]}>
           <Txt style={{ fontSize: 28 }}>{done ? '✅' : habit.emoji}</Txt>
         </View>
         <View style={{ flex: 1, gap: 6 }}>
@@ -68,7 +68,7 @@ export function HabitCard({
             <Chip
               label={challenge ? `⚡ ${pts} pts` : `+${pts}`}
               color={challenge ? C.gold : C.primary + '22'}
-              textColor={challenge ? C.bg : C.primary}
+              textColor={challenge ? C.ink : C.primaryDark}
             />
           </Row>
           <Row style={{ justifyContent: 'space-between' }}>
@@ -94,7 +94,7 @@ export function HabitCard({
               ))}
             </Row>
           </Row>
-          {challenge ? <Txt variant="small">Desafio do dia — vale {CHALLENGE_MULTIPLIER}x pontos!</Txt> : null}
+          {challenge ? <Txt variant="small">Golpe especial do dia — vale {CHALLENGE_MULTIPLIER}x pontos!</Txt> : null}
         </View>
       </Pressable>
     </Animated.View>
@@ -109,19 +109,22 @@ const styles = StyleSheet.create({
     backgroundColor: C.surface,
     borderRadius: R.lg,
     padding: S.md,
-    borderWidth: 1,
-    borderColor: C.border,
+    borderWidth: STROKE,
+    borderColor: C.ink,
+    boxShadow: hardShadow(4),
   },
-  challenge: { borderColor: C.gold, borderWidth: 2 },
-  done: { borderColor: C.primary + '88' },
+  challenge: { backgroundColor: '#FFF4CC', boxShadow: hardShadow(4, C.gold) },
+  done: { backgroundColor: '#EFFAEF', boxShadow: hardShadow(4, C.leaf) },
   emojiBox: {
     width: 56,
     height: 56,
     borderRadius: R.md,
     backgroundColor: C.surface2,
+    borderWidth: 2,
+    borderColor: C.ink,
     alignItems: 'center',
     justifyContent: 'center',
   },
   dot: { width: 10, height: 10, borderRadius: 5, borderWidth: 2 },
-  thumb: { width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: C.surface, marginLeft: -8 },
+  thumb: { width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: C.ink, marginLeft: -8 },
 });

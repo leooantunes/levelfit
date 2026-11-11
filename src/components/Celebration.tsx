@@ -13,14 +13,14 @@ import Animated, {
   ZoomIn,
 } from 'react-native-reanimated';
 
-import { C, R, S } from '@/constants/theme';
+import { C, hardShadow, R, S, STROKE } from '@/constants/theme';
 import type { PeriodResult } from '@/domain/types';
 
 import { Confetti } from './Confetti';
 import { Avatar, Button, haptic, Row, Txt } from './ui';
 
-const TROPHY = { day: '🥇', week: '🏆', month: '👑' } as const;
-const PERIOD_NAME = { day: 'do dia', week: 'da semana', month: 'do mês' } as const;
+const TROPHY = { day: '🥊', week: '🏆', month: '👑' } as const;
+const PERIOD_NAME = { day: 'do round', week: 'da semana', month: 'do mês' } as const;
 
 export function Celebration({
   result,
@@ -59,7 +59,7 @@ export function Celebration({
   const viewerWon = !!winner && winner.id === viewerId;
   const loser = winner ? standings.find((s) => s.player.id !== winner.id)?.player : null;
 
-  const headline = winner ? (viewerWon ? 'VOCÊ VENCEU!' : `${winner.name.toUpperCase()} VENCEU!`) : tie ? 'EMPATE!' : 'SEM PONTOS';
+  const headline = winner ? (viewerWon ? 'K.O.! VOCÊ VENCEU!' : `${winner.name.toUpperCase()} VENCEU!`) : tie ? 'EMPATE NO RINGUE!' : 'NINGUÉM LUTOU';
   const sub = winner
     ? viewerWon
       ? `Campeão ${PERIOD_NAME[period]} — ${label}`
@@ -79,10 +79,10 @@ export function Celebration({
           </View>
 
           <Animated.View entering={FadeInUp.delay(500)} style={{ alignItems: 'center', gap: S.sm }}>
-            <Txt variant="title" style={{ fontSize: 34, textAlign: 'center' }} color={winner?.color ?? C.gold}>
+            <Txt variant="title" style={{ fontSize: 34, lineHeight: 42, textAlign: 'center', textShadowColor: C.ink, textShadowOffset: { width: 0, height: 4 }, textShadowRadius: 0.01 }} color={C.gold}>
               {headline}
             </Txt>
-            <Txt variant="dim" style={{ textAlign: 'center' }}>
+            <Txt variant="dim" style={{ textAlign: 'center' }} color={C.nightText}>
               {sub}
             </Txt>
           </Animated.View>
@@ -104,17 +104,17 @@ export function Celebration({
 
           {winner && loser && stake && period !== 'day' ? (
             <Animated.View entering={FadeInUp.delay(1100)} style={styles.stake}>
-              <Txt variant="label" color={C.bg}>
+              <Txt variant="label" color={C.ink}>
                 Aposta
               </Txt>
-              <Txt variant="h3" color={C.bg} style={{ textAlign: 'center' }}>
-                {loser.name} paga: {stake} 💸
+              <Txt variant="h3" color={C.ink} style={{ textAlign: 'center' }}>
+                {loser.name} perdeu e paga: {stake} 💸
               </Txt>
             </Animated.View>
           ) : null}
 
           <Animated.View entering={FadeInUp.delay(1300)} style={{ alignSelf: 'stretch' }}>
-            <Button title={viewerWon ? 'Bora manter! 💪' : 'Partiu revanche! 🔥'} onPress={onClose} />
+            <Button title={viewerWon ? 'Defender o cinturão 🥊' : 'Quero revanche! 🔥'} onPress={onClose} />
           </Animated.View>
         </View>
       </Animated.View>
@@ -123,7 +123,7 @@ export function Celebration({
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(5,8,16,0.94)', justifyContent: 'center' },
+  overlay: { flex: 1, backgroundColor: 'rgba(30,18,16,0.97)', justifyContent: 'center' },
   center: { padding: S.xl, alignItems: 'center', gap: S.xl },
   trophyWrap: { width: 200, height: 200, alignItems: 'center', justifyContent: 'center' },
   glow: { position: 'absolute', width: 200, height: 200, borderRadius: 100 },
@@ -134,8 +134,19 @@ const styles = StyleSheet.create({
     borderRadius: R.lg,
     padding: S.lg,
     gap: S.md,
-    borderWidth: 1,
-    borderColor: C.border,
+    borderWidth: STROKE,
+    borderColor: C.ink,
+    boxShadow: hardShadow(5),
   },
-  stake: { backgroundColor: C.gold, borderRadius: R.md, padding: S.md, alignSelf: 'stretch', alignItems: 'center', gap: 2 },
+  stake: {
+    backgroundColor: C.gold,
+    borderRadius: R.md,
+    padding: S.md,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    gap: 2,
+    borderWidth: STROKE,
+    borderColor: C.ink,
+    boxShadow: hardShadow(4),
+  },
 });

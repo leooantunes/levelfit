@@ -70,7 +70,7 @@ function DuelCard({ duel, myId, index }: { duel: Duel; myId: string; index: numb
             ) : (
               <Row gap={S.sm} style={{ flex: 1, justifyContent: 'flex-end' }}>
                 <Txt variant="small">aguardando rival</Txt>
-                <Avatar emoji="❔" color={C.border} size={36} />
+                <Avatar emoji="❔" color={C.hairline} size={36} />
               </Row>
             )}
           </Row>
@@ -82,7 +82,7 @@ function DuelCard({ duel, myId, index }: { duel: Duel; myId: string; index: numb
                 <Txt variant="small">
                   Metas hoje: {done}/{goals.length}
                 </Txt>
-                <Txt variant="small" color={diff > 0 ? C.primary : diff < 0 ? C.danger : C.textDim}>
+                <Txt variant="small" color={diff > 0 ? C.leafDark : diff < 0 ? C.danger : C.textDim}>
                   {diff > 0 ? `Liderando por ${diff}` : diff < 0 ? `${opp.name} +${-diff}` : 'Empatados'}
                 </Txt>
               </Row>
@@ -90,10 +90,10 @@ function DuelCard({ duel, myId, index }: { duel: Duel; myId: string; index: numb
           ) : (
             <Pressable onPress={invite} style={styles.invite} hitSlop={6}>
               <Txt variant="small">Convide com o código</Txt>
-              <Txt variant="h3" color={C.primary} style={{ letterSpacing: 4 }}>
+              <Txt variant="h3" color={C.primaryDark} style={{ letterSpacing: 4 }}>
                 {duel.code}
               </Txt>
-              <Txt variant="small" color={C.primary}>
+              <Txt variant="small" color={C.primaryDark}>
                 Compartilhar ↗
               </Txt>
             </Pressable>
@@ -118,8 +118,8 @@ export default function HomeScreen() {
     <Screen refreshControl={<RefreshControl refreshing={syncing} onRefresh={refreshAll} tintColor={C.primary} />}>
       <Row style={{ justifyContent: 'space-between' }}>
         <View style={{ flex: 1 }}>
-          <Txt variant="label" color={C.primary}>
-            ⚡ Level Fit
+          <Txt variant="label" color={C.primaryDark}>
+            🥊 Level Fit
           </Txt>
           <Txt variant="title" numberOfLines={1}>
             Olá, {account.name}!

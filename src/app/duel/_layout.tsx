@@ -3,7 +3,7 @@ import { NativeTabs } from 'expo-router/native-tabs';
 import { View } from 'react-native';
 
 import { CelebrationHost } from '@/components/CelebrationHost';
-import { C } from '@/constants/theme';
+import { C, F } from '@/constants/theme';
 import { useActiveDuel } from '@/store/useGame';
 
 export default function DuelTabsLayout() {
@@ -16,8 +16,8 @@ export default function DuelTabsLayout() {
       <NativeTabs
         backgroundColor={C.surface}
         indicatorColor={C.primary + '33'}
-        tintColor={C.primary}
-        labelStyle={{ color: C.textDim, selected: { color: C.primary } }}>
+        tintColor={C.primaryDark}
+        labelStyle={{ color: C.textMuted, fontFamily: F.semibold, selected: { color: C.ink } }}>
         <NativeTabs.Trigger name="index">
           <NativeTabs.Trigger.Label>Hoje</NativeTabs.Trigger.Label>
           <NativeTabs.Trigger.Icon sf={{ default: 'flame', selected: 'flame.fill' }} md="local_fire_department" />

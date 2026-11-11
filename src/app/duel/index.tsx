@@ -6,7 +6,7 @@ import { HabitCard } from '@/components/HabitCard';
 import { Card, Chip, ProgressBar, Row, Screen, Txt } from '@/components/ui';
 import { VersusBar } from '@/components/VersusBar';
 import { C, R, S } from '@/constants/theme';
-import { addDays, periodLabel } from '@/domain/dates';
+import { addDays, daysBetween, periodLabel, toDateKey } from '@/domain/dates';
 import { dailyChallenge, getHabit } from '@/domain/habits';
 import { PERFECT_DAY_BONUS, streakMultiplier } from '@/domain/scoring';
 import { usePlayers, useScoreBook, useToday } from '@/hooks/useScoreBook';
@@ -53,15 +53,16 @@ export default function TodayScreen() {
       </Pressable>
       <Row style={{ justifyContent: 'space-between' }}>
         <View style={{ flex: 1 }}>
-          <Txt variant="label" color={C.primary} numberOfLines={1}>
-            ⚡ {duel.name}
+          <Txt variant="label" color={C.primaryDark} numberOfLines={1}>
+            🥊 {duel.name}
           </Txt>
-          <Txt variant="title">{periodLabel('day', today, today)}</Txt>
+          <Txt variant="title">Round {daysBetween(toDateKey(new Date(duel.createdAt)), today) + 1}</Txt>
+          <Txt variant="dim">{periodLabel('day', today, today)}</Txt>
         </View>
         <Chip
           label={syncError ? '⚠️ offline' : syncing ? '⟳ sincronizando' : '● online'}
-          color={syncError ? C.warning + '33' : C.primary + '22'}
-          textColor={syncError ? C.warning : C.primary}
+          color={syncError ? C.warning + '33' : C.leaf + '33'}
+          textColor={C.ink}
         />
       </Row>
 
@@ -85,12 +86,12 @@ export default function TodayScreen() {
           </Row>
           <ProgressBar value={goals.length ? done / goals.length : 0} />
           <Row style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
-            <Chip label={streak === 1 ? '🔥 1 dia de sequência' : `🔥 ${streak} dias seguidos`} color={C.warning + '22'} textColor={C.warning} />
-            <Chip label={`Combo x${nextMultiplier}`} color={C.accent + '33'} textColor="#C4B5FD" />
+            <Chip label={streak === 1 ? '🔥 1 dia de sequência' : `🔥 ${streak} dias seguidos`} color={C.warning + '33'} textColor={C.ink} />
+            <Chip label={`Combo x${nextMultiplier}`} color={C.accent + '33'} textColor={C.accent} />
             <Chip
               label={myDay.perfect ? '💯 Bônus garantido' : `💯 +${PERFECT_DAY_BONUS} se completar tudo`}
-              color={C.gold + '22'}
-              textColor={C.gold}
+              color={C.gold + '55'}
+              textColor={C.ink}
             />
           </Row>
         </Card>
@@ -98,9 +99,9 @@ export default function TodayScreen() {
 
       <View style={{ gap: S.md }}>
         <Row style={{ justifyContent: 'space-between' }}>
-          <Txt variant="h2">Suas metas</Txt>
+          <Txt variant="h2">Seus golpes de hoje</Txt>
           <Pressable onPress={() => router.push('/goals')} hitSlop={10}>
-            <Txt variant="dim" color={C.primary}>
+            <Txt variant="h3" color={C.primaryDark}>
               Editar
             </Txt>
           </Pressable>
@@ -119,7 +120,7 @@ export default function TodayScreen() {
       </View>
 
       <View style={{ gap: S.md }}>
-        <Txt variant="h2">⚡ Desafio do dia</Txt>
+        <Txt variant="h2">⚡ Golpe especial</Txt>
         <HabitCard
           habit={challenge}
           me={me}
@@ -141,5 +142,5 @@ export default function TodayScreen() {
 }
 
 const styles = StyleSheet.create({
-  tip: { padding: S.md, borderRadius: R.md, backgroundColor: C.surface, opacity: 0.8 },
+  tip: { padding: S.md, borderRadius: R.md, backgroundColor: C.surface2, borderWidth: 2, borderColor: C.hairline, borderStyle: 'dashed' },
 });

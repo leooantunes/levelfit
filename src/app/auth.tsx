@@ -4,6 +4,7 @@ import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AvatarPicker, Input } from '@/components/ProfileFields';
+import { Mascot, Wordmark } from '@/components/Brand';
 import { Avatar, Button, Card, haptic, Row, Txt } from '@/components/ui';
 import { AVATARS, C, PLAYER_COLORS, S } from '@/constants/theme';
 import { useGame } from '@/store/useGame';
@@ -68,23 +69,21 @@ export default function AuthScreen() {
   const screens: Record<Step, React.ReactNode> = {
     welcome: (
       <View style={{ gap: S.xl, alignItems: 'center', paddingTop: S.xxl }}>
-        <Animated.Text entering={FadeInDown.springify()} style={{ fontSize: 96 }}>
-          ⚡
-        </Animated.Text>
+        <Animated.View entering={FadeInDown.springify()}>
+          <Mascot size={170} />
+        </Animated.View>
         <Animated.View entering={FadeInDown.delay(150)} style={{ alignItems: 'center', gap: S.sm }}>
-          <Txt variant="title" style={{ fontSize: 44 }} color={C.primary}>
-            LEVEL FIT
-          </Txt>
+          <Wordmark size={40} />
           <Txt variant="h3" style={{ textAlign: 'center' }}>
-            Hábitos saudáveis viram um duelo.
+            Hábitos saudáveis viram uma luta.
           </Txt>
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(300)} style={{ gap: S.md, alignSelf: 'stretch' }}>
           {[
-            ['⚔️', 'Desafie várias pessoas ao mesmo tempo, cada uma num duelo.'],
+            ['⚔️', 'Desafie várias pessoas ao mesmo tempo, cada uma numa luta.'],
             ['🎯', 'Metas sugeridas: água, leitura, dieta, treino e mais.'],
             ['📸', 'Cumpriu? Poste uma foto de prova para pontuar.'],
-            ['🏆', 'Ranking diário, semanal e mensal com festa pro vencedor.'],
+            ['🥊', 'Cada dia é um round: ranking diário, semanal e mensal com festa pro vencedor.'],
             ['🔥', 'Sequências dão combo, dia perfeito dá bônus.'],
           ].map(([e, t]) => (
             <Row key={t} gap={S.md}>
@@ -97,7 +96,7 @@ export default function AuthScreen() {
         </Animated.View>
         {isOnlineAvailable ? (
           <View style={{ alignSelf: 'stretch', gap: S.sm }}>
-            <Button title="Criar conta" onPress={() => setStep('signup')} />
+            <Button title="Entrar no ringue" onPress={() => setStep('signup')} />
             <Button title="Já tenho conta" variant="ghost" onPress={() => setStep('login')} />
           </View>
         ) : (
@@ -136,13 +135,13 @@ export default function AuthScreen() {
         />
         <Button title="Entrar" onPress={doLogin} loading={busy} disabled={!emailOk || !passwordOk} />
         <Pressable onPress={forgot} hitSlop={10} style={{ alignSelf: 'center' }}>
-          <Txt variant="dim" color={C.primary}>
+          <Txt variant="dim" color={C.primaryDark}>
             Esqueci minha senha
           </Txt>
         </Pressable>
         <Pressable onPress={() => setStep('signup')} hitSlop={10} style={{ alignSelf: 'center' }}>
           <Txt variant="dim">
-            Não tem conta? <Txt color={C.primary}>Criar conta</Txt>
+            Não tem conta? <Txt color={C.primaryDark}>Criar conta</Txt>
           </Txt>
         </Pressable>
       </View>
@@ -173,7 +172,7 @@ export default function AuthScreen() {
         <Button title="Continuar" onPress={() => setStep('profile')} disabled={!emailOk || !passwordOk} />
         <Pressable onPress={() => setStep('login')} hitSlop={10} style={{ alignSelf: 'center' }}>
           <Txt variant="dim">
-            Já tem conta? <Txt color={C.primary}>Entrar</Txt>
+            Já tem conta? <Txt color={C.primaryDark}>Entrar</Txt>
           </Txt>
         </Pressable>
       </View>
@@ -181,7 +180,7 @@ export default function AuthScreen() {
 
     profile: (
       <View style={{ gap: S.lg }}>
-        <Txt variant="title">Quem é você?</Txt>
+        <Txt variant="title">Quem é o lutador?</Txt>
         <Txt variant="dim">É assim que seus rivais vão te ver nos duelos.</Txt>
         <Row style={{ justifyContent: 'center' }}>
           <Avatar emoji={avatar} color={color} size={88} />

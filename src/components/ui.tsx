@@ -17,7 +17,7 @@ import {
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
-import { C, F, R, S } from '@/constants/theme';
+import { C, F, hardShadow, R, S, STROKE } from '@/constants/theme';
 
 export function haptic(kind: 'light' | 'success' | 'heavy' | 'warning' = 'light') {
   if (Platform.OS === 'web') return;
@@ -82,16 +82,17 @@ export function Button({
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
-  const scale = useSharedValue(1);
-  const anim = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-  const bg = { primary: C.primary, secondary: C.surface2, ghost: 'transparent', danger: C.danger }[variant];
-  const fg = variant === 'primary' ? '#06210A' : variant === 'danger' ? '#fff' : C.text;
+  // Ao pressionar, o botão "afunda" sobre a própria sombra chapada.
+  const press = useSharedValue(0);
+  const anim = useAnimatedStyle(() => ({ transform: [{ translateY: press.value * 3 }] }));
+  const bg = { primary: C.primary, secondary: C.surface, ghost: 'transparent', danger: C.danger }[variant];
+  const fg = variant === 'primary' || variant === 'danger' ? C.onColor : C.ink;
   return (
     <Pressable
       {...rest}
       disabled={disabled || loading}
-      onPressIn={() => scale.set(withSpring(0.95))}
-      onPressOut={() => scale.set(withSpring(1))}
+      onPressIn={() => press.set(withSpring(1, { duration: 120 }))}
+      onPressOut={() => press.set(withSpring(0, { duration: 160 }))}
       onPress={(e) => {
         haptic();
         onPress?.(e);
@@ -100,7 +101,7 @@ export function Button({
         style={[
           styles.button,
           { backgroundColor: bg, opacity: disabled ? 0.45 : 1 },
-          variant === 'ghost' && { borderWidth: 1, borderColor: C.border },
+          variant === 'ghost' ? { borderStyle: 'dashed', boxShadow: 'none' } : null,
           anim,
           style,
         ]}>
@@ -120,7 +121,7 @@ export function Button({
 export function ProgressBar({
   value,
   color = C.primary,
-  height = 10,
+  height = 14,
   track = C.surface2,
 }: {
   value: number;
@@ -134,7 +135,7 @@ export function ProgressBar({
   }, [value, w]);
   const anim = useAnimatedStyle(() => ({ width: `${w.value * 100}%` }));
   return (
-    <View style={{ height, borderRadius: height, backgroundColor: track, overflow: 'hidden' }}>
+    <View style={{ height, borderRadius: height, backgroundColor: track, overflow: 'hidden', borderWidth: 2, borderColor: C.ink }}>
       <Animated.View style={[{ height: '100%', borderRadius: height, backgroundColor: color }, anim]} />
     </View>
   );
@@ -161,7 +162,7 @@ export function Segmented<T extends string>({
               haptic();
               onChange(o.value);
             }}>
-            <Text style={[styles.segmentText, active && { color: C.bg }]}>{o.label}</Text>
+            <Text style={[styles.segmentText, active && { color: C.onColor }]}>{o.label}</Text>
           </Pressable>
         );
       })}
@@ -176,9 +177,10 @@ export function Avatar({ emoji, color, size = 44 }: { emoji: string; color: stri
         width: size,
         height: size,
         borderRadius: size / 2,
-        backgroundColor: color + '33',
-        borderWidth: 2,
-        borderColor: color,
+        backgroundColor: color + '40',
+        borderWidth: STROKE,
+        borderColor: C.ink,
+        boxShadow: `0px 0px 0px 3px ${color}`,
         alignItems: 'center',
         justifyContent: 'center',
       }}>
@@ -203,27 +205,46 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
   // Na web as abas ficam no topo; no celular ficam embaixo.
   content: { padding: S.lg, paddingTop: Platform.OS === 'web' ? 72 : S.lg, paddingBottom: 120, gap: S.lg },
-  title: { color: C.text, fontSize: 30, fontWeight: '900', fontFamily: F.rounded, letterSpacing: -0.5 },
-  h2: { color: C.text, fontSize: 22, fontWeight: '800', fontFamily: F.rounded },
-  h3: { color: C.text, fontSize: 17, fontWeight: '700' },
-  body: { color: C.text, fontSize: 15, lineHeight: 21 },
-  dim: { color: C.textDim, fontSize: 14, lineHeight: 20 },
-  small: { color: C.textMuted, fontSize: 12 },
-  label: { color: C.textDim, fontSize: 12, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
-  number: { color: C.text, fontSize: 28, fontWeight: '900', fontFamily: F.rounded, fontVariant: ['tabular-nums'] },
-  card: { backgroundColor: C.surface, borderRadius: R.lg, padding: S.lg, borderWidth: 1, borderColor: C.border, gap: S.md },
+  title: { color: C.ink, fontSize: 28, fontFamily: F.display, lineHeight: 34 },
+  h2: { color: C.ink, fontSize: 21, fontFamily: F.heavy },
+  h3: { color: C.ink, fontSize: 17, fontFamily: F.semibold },
+  body: { color: C.text, fontSize: 15, lineHeight: 21, fontFamily: F.medium },
+  dim: { color: C.textDim, fontSize: 14, lineHeight: 20, fontFamily: F.medium },
+  small: { color: C.textMuted, fontSize: 12, fontFamily: F.medium },
+  label: { color: C.textDim, fontSize: 12, fontFamily: F.heavy, letterSpacing: 1.4, textTransform: 'uppercase' },
+  number: { color: C.ink, fontSize: 28, fontFamily: F.display, fontVariant: ['tabular-nums'] },
+  card: {
+    backgroundColor: C.surface,
+    borderRadius: R.lg,
+    padding: S.lg,
+    borderWidth: STROKE,
+    borderColor: C.ink,
+    boxShadow: hardShadow(5),
+    gap: S.md,
+  },
   button: {
-    minHeight: 52,
+    minHeight: 54,
     borderRadius: R.md,
     paddingHorizontal: S.xl,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: STROKE,
+    borderColor: C.ink,
+    boxShadow: hardShadow(4),
   },
-  buttonText: { fontSize: 16, fontWeight: '800' },
-  segmented: { flexDirection: 'row', backgroundColor: C.surface, borderRadius: R.pill, padding: 4, borderWidth: 1, borderColor: C.border },
-  segment: { flex: 1, paddingVertical: 10, borderRadius: R.pill, alignItems: 'center' },
-  segmentActive: { backgroundColor: C.primary },
-  segmentText: { color: C.textDim, fontWeight: '800', fontSize: 14 },
-  chip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: R.pill, alignSelf: 'flex-start' },
-  chipText: { fontSize: 12, fontWeight: '700' },
+  buttonText: { fontSize: 16, fontFamily: F.heavy, letterSpacing: 0.8, textTransform: 'uppercase' },
+  segmented: {
+    flexDirection: 'row',
+    backgroundColor: C.surface,
+    borderRadius: R.pill,
+    padding: 4,
+    borderWidth: STROKE,
+    borderColor: C.ink,
+    boxShadow: hardShadow(3),
+  },
+  segment: { flex: 1, paddingVertical: 9, borderRadius: R.pill, alignItems: 'center' },
+  segmentActive: { backgroundColor: C.ink, borderWidth: 2, borderColor: C.ink },
+  segmentText: { color: C.textDim, fontFamily: F.semibold, fontSize: 15 },
+  chip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: R.pill, alignSelf: 'flex-start', borderWidth: 1.5, borderColor: C.ink },
+  chipText: { fontSize: 12, fontFamily: F.semibold },
 });

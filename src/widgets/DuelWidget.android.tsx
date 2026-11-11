@@ -7,12 +7,12 @@ import type { DuelWidgetProps } from './types';
 const DuelWidget = (props: DuelWidgetProps) => {
   'widget';
   // Tudo precisa estar declarado aqui dentro: o widget roda em um runtime isolado.
-  const BG = '#0A0E1A';
-  const TRACK = '#1C2540';
-  const GREEN = '#7CFF6B';
-  const BLUE = '#38BDF8';
-  const PINK = '#F472B6';
-  const DIM = '#9AA3BF';
+  const BG = '#2B1B17';
+  const TRACK = '#4A2E26';
+  const GREEN = '#F7B928';
+  const BLUE = '#FF6A4D';
+  const PINK = '#5AA9F0';
+  const DIM = '#CBB3A6';
   const WHITE = '#FFFFFF';
   const progress = props.total > 0 ? props.done / props.total : 0;
 
@@ -22,7 +22,7 @@ const DuelWidget = (props: DuelWidgetProps) => {
       modifiers={[fillMaxSize(), background(BG), cornerRadius(24), paddingAll(14)]}>
       <Row horizontalArrangement="spaceBetween" modifiers={[fillMaxWidth()]}>
         <Text color={GREEN} style={{ fontSize: 13, fontWeight: '900' }}>
-          ⚡ LEVEL FIT
+          🥊 LEVEL FIT
         </Text>
         <Text color={DIM} style={{ fontSize: 12 }}>
           {`🔥 ${props.streak} dias`}
