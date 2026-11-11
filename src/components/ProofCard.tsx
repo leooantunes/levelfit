@@ -71,7 +71,8 @@ export function ProofCard({
       </Row>
       <Pressable onPress={() => router.push({ pathname: '/proof/[id]', params: { id: checkin.id } })}>
         <Image
-          source={{ uri: checkin.photoUri }}
+          // A URL assinada muda a cada sincronização; a foto de uma prova nunca muda.
+          source={{ uri: checkin.photoUri, cacheKey: checkin.id }}
           style={[styles.photo, checkin.disputed && { opacity: 0.4 }]}
           contentFit="cover"
           transition={200}

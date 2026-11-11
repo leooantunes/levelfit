@@ -5,7 +5,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { todayKey } from '@/domain/dates';
 import type { Checkin, Duel, Period } from '@/domain/types';
-import { deleteLocalPhoto, persistPhoto } from '@/lib/photos';
+import { deleteLocalPhoto, persistPhoto, resolveLocalPhoto } from '@/lib/photos';
 import { api, type Account, type CreateDuelInput, type Profile, type Snapshot } from '@/sync/supabase';
 
 type Reminders = { enabled: boolean; hour: number; minute: number };
@@ -88,19 +88,36 @@ export const useGame = create<GameState>()(
         const remoteIds = new Set(snap.checkins.map((c) => c.id));
         const merged = snap.checkins.map((c) => {
           const l = localById.get(c.id);
-          // Prefere a foto local (abre offline e não expira).
-          return l?.photoUri.startsWith('file://') ? { ...c, photoUri: l.photoUri } : c;
+          // Prefere a foto local (abre offline e não expira), se o arquivo ainda existir.
+          const localUri = l?.photoUri.startsWith('file://') ? resolveLocalPhoto(l.photoUri) : null;
+          return localUri ? { ...c, photoUri: localUri } : c;
         });
-        const pending = local.filter((c) => s.pendingSync.includes(c.id) && !remoteIds.has(c.id));
+        const pending = local
+          .filter((c) => s.pendingSync.includes(c.id) && !remoteIds.has(c.id))
+          .map((c) => ({ ...c, photoUri: resolveLocalPhoto(c.photoUri) ?? c.photoUri }));
         return [...pending, ...merged].sort(byNewest);
       };
 
+      /**
+       * Envia as provas da fila. Cada uma é tentada separadamente: se uma falhar, ela fica na fila
+       * para a próxima vez e as outras (e o resto da sincronização) seguem normalmente.
+       */
       const pushPending = async () => {
+        let firstError: unknown = null;
         for (const id of get().pendingSync) {
           const c = findCheckin(id);
-          if (c) await api.addCheckin(c);
-          set((s) => ({ pendingSync: s.pendingSync.filter((p) => p !== id) }));
+          try {
+            if (c) {
+              const photoUri = resolveLocalPhoto(c.photoUri);
+              if (!photoUri) throw new Error('a foto não está mais no aparelho');
+              await api.addCheckin({ ...c, photoUri });
+            }
+            set((s) => ({ pendingSync: s.pendingSync.filter((p) => p !== id) }));
+          } catch (e) {
+            firstError ??= e;
+          }
         }
+        if (firstError) set({ syncError: `Prova não enviada: ${errorText(firstError)}` });
       };
 
       const removeDuelLocally = (duelId: string) => {
@@ -320,14 +337,25 @@ export const useGame = create<GameState>()(
           if (emoji) reactions[me] = emoji;
           else delete reactions[me];
           patchCheckin(c, { reactions });
-          await api.updateCheckin(checkinId, { reactions }).catch(() => {});
+          try {
+            // O servidor devolve as reações atuais (inclui a do rival, se ele reagiu ao mesmo tempo).
+            patchCheckin(c, { reactions: await api.setReaction(checkinId, emoji) });
+          } catch (e) {
+            patchCheckin(c, { reactions: c.reactions });
+            set({ syncError: errorText(e) });
+          }
         },
 
         async toggleDispute(checkinId) {
           const c = findCheckin(checkinId);
           if (!c) return;
           patchCheckin(c, { disputed: !c.disputed });
-          await api.updateCheckin(checkinId, { disputed: !c.disputed }).catch(() => {});
+          try {
+            await api.updateCheckin(checkinId, { disputed: !c.disputed });
+          } catch (e) {
+            patchCheckin(c, { disputed: c.disputed });
+            set({ syncError: errorText(e) });
+          }
         },
 
         markCelebrated(period, key) {

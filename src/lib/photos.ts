@@ -32,11 +32,29 @@ export function persistPhoto(uri: string, id: string): string {
   return dest.uri;
 }
 
-export function deleteLocalPhoto(uri: string) {
-  if (Platform.OS === 'web' || !uri.startsWith('file://')) return;
+/**
+ * Caminho atual de uma foto local. No iOS a pasta do app muda de caminho a cada atualização,
+ * então um `file://` salvo antes pode não existir mais: procura o mesmo arquivo na pasta atual.
+ * Retorna a URI como veio se não for local, ou `null` se a foto local sumiu de vez.
+ */
+export function resolveLocalPhoto(uri: string): string | null {
+  if (Platform.OS === 'web' || !uri.startsWith('file://')) return uri;
   try {
-    const f = new File(uri);
-    if (f.exists) f.delete();
+    if (new File(uri).exists) return uri;
+    const name = uri.split('/').pop();
+    if (!name) return null;
+    const moved = new File(new Directory(Paths.document, 'proofs'), name);
+    return moved.exists ? moved.uri : null;
+  } catch {
+    return null;
+  }
+}
+
+export function deleteLocalPhoto(uri: string) {
+  const local = resolveLocalPhoto(uri);
+  if (!local || !local.startsWith('file://')) return;
+  try {
+    new File(local).delete();
   } catch {
     // ignorar
   }

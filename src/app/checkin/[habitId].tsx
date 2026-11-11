@@ -147,7 +147,7 @@ export default function CheckinScreen() {
                 return (
                   <Pressable key={c.id} onPress={() => router.push({ pathname: '/proof/[id]', params: { id: c.id } })}>
                     <Row>
-                      <Image source={{ uri: c.photoUri }} style={styles.thumb} contentFit="cover" />
+                      <Image source={{ uri: c.photoUri, cacheKey: c.id }}style={styles.thumb} contentFit="cover" />
                       <View style={{ flex: 1 }}>
                         <Txt variant="h3">
                           {who?.avatar} {who?.name}

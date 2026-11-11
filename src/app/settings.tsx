@@ -36,11 +36,17 @@ export default function SettingsScreen() {
     }
   };
 
-  const logout = () =>
-    Alert.alert('Sair da conta?', 'Seus duelos continuam salvos. É só entrar de novo para voltar.', [
+  const logout = () => {
+    // Provas tiradas sem internet ainda não subiram; sair da conta apaga a fila local.
+    const unsent = useGame.getState().pendingSync.length;
+    const message = unsent
+      ? `Você tem ${unsent} ${unsent === 1 ? 'prova que ainda não foi enviada e será perdida' : 'provas que ainda não foram enviadas e serão perdidas'}. Conecte-se à internet e abra o app antes de sair para não perder.`
+      : 'Seus duelos continuam salvos. É só entrar de novo para voltar.';
+    Alert.alert('Sair da conta?', message, [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: signOut },
+      { text: unsent ? 'Sair mesmo assim' : 'Sair', style: 'destructive', onPress: signOut },
     ]);
+  };
 
   return (
     <Screen edges={['top', 'bottom']}>

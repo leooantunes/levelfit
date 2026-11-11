@@ -59,7 +59,15 @@ export function Screen({
 type Variant = 'title' | 'h2' | 'h3' | 'body' | 'dim' | 'small' | 'label' | 'number';
 
 export function Txt({ variant = 'body', style, color, ...rest }: TextProps & { variant?: Variant; color?: string }) {
-  return <Text {...rest} style={[styles[variant], color ? { color } : null, style as StyleProp<TextStyle>]} />;
+  // Variantes têm lineHeight fixo; se o fontSize aumentar (ex.: emoji grande) sem lineHeight próprio,
+  // a linha cresce junto para o glifo não ser cortado.
+  const flat = StyleSheet.flatten(style as StyleProp<TextStyle>);
+  const base = styles[variant] as TextStyle;
+  const fit =
+    flat?.fontSize && !flat.lineHeight && base.lineHeight && flat.fontSize * 1.2 > base.lineHeight
+      ? { lineHeight: Math.round(flat.fontSize * 1.3) }
+      : null;
+  return <Text {...rest} style={[base, color ? { color } : null, flat, fit]} />;
 }
 
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {

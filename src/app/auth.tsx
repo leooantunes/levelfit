@@ -1,18 +1,26 @@
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AvatarPicker, Input } from '@/components/ProfileFields';
 import { Mascot, Wordmark } from '@/components/Brand';
+import { IconBadge } from '@/components/IconBadge';
+import { AvatarPicker, Input } from '@/components/ProfileFields';
 import { Avatar, Button, Card, haptic, Row, Txt } from '@/components/ui';
-import { AVATARS, C, PLAYER_COLORS, S } from '@/constants/theme';
+import { AVATARS, C, hardShadow, PLAYER_COLORS, R, S, STROKE } from '@/constants/theme';
 import { useGame } from '@/store/useGame';
 import { api, isOnlineAvailable } from '@/sync/supabase';
 
 type Step = 'welcome' | 'login' | 'signup' | 'profile';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
+const FEATURES = [
+  { icon: { ios: 'figure.boxing', android: 'sports_mma', web: 'sports_mma' }, color: C.redCorner, title: 'Desafie', desc: 'Vários duelos ao mesmo tempo' },
+  { icon: { ios: 'target', android: 'target', web: 'target' }, color: C.blueCorner, title: 'Metas', desc: 'Água, treino, leitura, sono…' },
+  { icon: { ios: 'camera.fill', android: 'photo_camera', web: 'photo_camera' }, color: C.leaf, title: 'Prove', desc: 'Foto de cada meta cumprida' },
+  { icon: { ios: 'trophy.fill', android: 'trophy', web: 'trophy' }, color: C.gold, title: 'Vença', desc: 'Leve o cinturão do mês' },
+] as const;
+
+const EMAIL_RE =/^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
 
 export default function AuthScreen() {
   const signIn = useGame((s) => s.signIn);
@@ -75,23 +83,16 @@ export default function AuthScreen() {
         <Animated.View entering={FadeInDown.delay(150)} style={{ alignItems: 'center', gap: S.sm }}>
           <Wordmark size={40} />
           <Txt variant="h3" style={{ textAlign: 'center' }}>
-            Hábitos saudáveis viram uma luta.
+            Cuide da saúde. Vença seus amigos.
           </Txt>
         </Animated.View>
-        <Animated.View entering={FadeInDown.delay(300)} style={{ gap: S.md, alignSelf: 'stretch' }}>
-          {[
-            ['⚔️', 'Desafie várias pessoas ao mesmo tempo, cada uma numa luta.'],
-            ['🎯', 'Metas sugeridas: água, leitura, dieta, treino e mais.'],
-            ['📸', 'Cumpriu? Poste uma foto de prova para pontuar.'],
-            ['🥊', 'Cada dia é um round: ranking diário, semanal e mensal com festa pro vencedor.'],
-            ['🔥', 'Sequências dão combo, dia perfeito dá bônus.'],
-          ].map(([e, t]) => (
-            <Row key={t} gap={S.md}>
-              <Txt style={{ fontSize: 24 }}>{e}</Txt>
-              <Txt variant="dim" style={{ flex: 1 }}>
-                {t}
-              </Txt>
-            </Row>
+        <Animated.View entering={FadeInDown.delay(300)} style={styles.grid}>
+          {FEATURES.map((f) => (
+            <View key={f.title} style={styles.tile}>
+              <IconBadge name={f.icon} color={f.color} />
+              <Txt variant="h3">{f.title}</Txt>
+              <Txt variant="small">{f.desc}</Txt>
+            </View>
           ))}
         </Animated.View>
         {isOnlineAvailable ? (
@@ -101,11 +102,20 @@ export default function AuthScreen() {
           </View>
         ) : (
           <Card style={{ alignSelf: 'stretch' }}>
-            <Txt variant="h3">⚙️ Falta configurar o servidor</Txt>
-            <Txt variant="dim">
-              As contas e os duelos ficam no Supabase. Preencha EXPO_PUBLIC_SUPABASE_URL e EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY no arquivo .env
-              (veja o README) e reinicie o app.
-            </Txt>
+            {__DEV__ ? (
+              <>
+                <Txt variant="h3">⚙️ Falta configurar o servidor</Txt>
+                <Txt variant="dim">
+                  As contas e os duelos ficam no Supabase. Preencha EXPO_PUBLIC_SUPABASE_URL e EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY no arquivo .env
+                  (veja o README) e reinicie o app.
+                </Txt>
+              </>
+            ) : (
+              <>
+                <Txt variant="h3">Estamos fora do ar 🥊</Txt>
+                <Txt variant="dim">Não foi possível conectar ao Level Fit agora. Tente de novo mais tarde.</Txt>
+              </>
+            )}
           </Card>
         )}
       </View>
@@ -150,7 +160,7 @@ export default function AuthScreen() {
     signup: (
       <View style={{ gap: S.lg }}>
         <Txt variant="title">Crie sua conta</Txt>
-        <Txt variant="dim">Com a conta você entra de qualquer celular e mantém todos os seus duelos.</Txt>
+        <Txt variant="dim">Seus duelos, pontos e provas ficam salvos na conta. Entre de qualquer celular e continue de onde parou.</Txt>
         <Input
           value={email}
           onChangeText={setEmail}
@@ -211,3 +221,18 @@ export default function AuthScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: S.md, alignSelf: 'stretch' },
+  tile: {
+    flexBasis: '46%',
+    flexGrow: 1,
+    gap: S.xs,
+    padding: S.md,
+    borderRadius: R.lg,
+    backgroundColor: C.surface,
+    borderWidth: STROKE,
+    borderColor: C.ink,
+    boxShadow: hardShadow(4),
+  },
+});

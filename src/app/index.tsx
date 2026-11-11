@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { Pressable, RefreshControl, Share, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { Mascot } from '@/components/Brand';
 import { Avatar, Button, Card, Chip, haptic, ProgressBar, Row, Screen, Txt } from '@/components/ui';
 import { C, R, S } from '@/constants/theme';
 import { getHabit } from '@/domain/habits';
@@ -141,10 +142,10 @@ export default function HomeScreen() {
 
       {list.length === 0 ? (
         <Card style={{ alignItems: 'center', paddingVertical: S.xxl }}>
-          <Txt style={{ fontSize: 56 }}>🥊</Txt>
+          <Mascot size={110} />
           <Txt variant="h3">Nenhum duelo ainda</Txt>
           <Txt variant="dim" style={{ textAlign: 'center' }}>
-            Crie um duelo e mande o código para um amigo, ou entre com o código que alguém te mandou. Você pode ter vários duelos ao mesmo tempo.
+            Crie um duelo e mande o código pra um amigo, ou entre com um código que te mandaram.
           </Txt>
         </Card>
       ) : (

@@ -10,6 +10,29 @@
     "ios": {
       "bundleIdentifier": "com.levelfit.app",
       "supportsTablet": false,
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": ["C617.1", "0A2A.1", "3B52.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
+            "NSPrivacyAccessedAPITypeReasons": ["35F9.1"]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
+            "NSPrivacyAccessedAPITypeReasons": ["E174.1", "85F4.1"]
+          }
+        ]
+      },
       "infoPlist": {
         "NSCameraUsageDescription": "O Level Fit usa a câmera para você tirar a foto de prova dos seus hábitos.",
         "NSPhotoLibraryUsageDescription": "O Level Fit acessa suas fotos para você escolher a prova de um hábito."
@@ -43,7 +66,8 @@
         "expo-image-picker",
         {
           "cameraPermission": "O Level Fit usa a câmera para você tirar a foto de prova dos seus hábitos.",
-          "photosPermission": "O Level Fit acessa suas fotos para você escolher a prova de um hábito."
+          "photosPermission": "O Level Fit acessa suas fotos para você escolher a prova de um hábito.",
+          "microphonePermission": false
         }
       ],
       [

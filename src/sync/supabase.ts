@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient, type SupabaseClient, type User } from '@supabase/supabase-js';
 import { File } from 'expo-file-system';
+import { AppState, Platform } from 'react-native';
 
 import type { Checkin, Duel, Player } from '@/domain/types';
 
@@ -21,9 +22,18 @@ let client: SupabaseClient | null = null;
 function supabase(): SupabaseClient {
   if (!client) {
     if (!URL || !KEY) throw new Error('Supabase não configurado (veja o README).');
-    client = createClient(URL, KEY, {
+    const sb = createClient(URL, KEY, {
       auth: { storage: AsyncStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false },
     });
+    // No React Native os timers param em segundo plano: a doc do Supabase recomenda ligar/desligar
+    // o refresh automático do token conforme o app entra/sai do primeiro plano (registrar uma vez só).
+    if (Platform.OS !== 'web') {
+      AppState.addEventListener('change', (state) => {
+        if (state === 'active') sb.auth.startAutoRefresh();
+        else sb.auth.stopAutoRefresh();
+      });
+    }
+    client = sb;
   }
   return client;
 }
@@ -39,17 +49,22 @@ function toAccount(user: User): Account {
   };
 }
 
-const AUTH_ERRORS: [RegExp, string][] = [
-  [/invalid login credentials/i, 'E-mail ou senha incorretos.'],
-  [/email not confirmed/i, 'Confirme seu e-mail pelo link que enviamos antes de entrar.'],
-  [/already registered|already exists/i, 'Já existe uma conta com este e-mail. Tente entrar.'],
-  [/password should be at least/i, 'A senha precisa ter pelo menos 6 caracteres.'],
-  [/invalid.*email|email.*invalid/i, 'E-mail inválido.'],
-  [/rate limit/i, 'Muitas tentativas. Espere um pouco e tente de novo.'],
-];
-function authError(e: { message: string }): Error {
-  const hit = AUTH_ERRORS.find(([re]) => re.test(e.message));
-  return new Error(hit ? hit[1] : e.message);
+/** Mensagens pelos códigos de erro do Supabase Auth (error.code). */
+const AUTH_ERRORS: Record<string, string> = {
+  invalid_credentials: 'E-mail ou senha incorretos.',
+  email_not_confirmed: 'Confirme seu e-mail pelo link que enviamos antes de entrar.',
+  user_already_exists: 'Já existe uma conta com este e-mail. Tente entrar.',
+  email_exists: 'Já existe uma conta com este e-mail. Tente entrar.',
+  weak_password: 'Senha fraca. Use pelo menos 6 caracteres.',
+  email_address_invalid: 'Não conseguimos enviar o e-mail de confirmação para este endereço. Tente outro e-mail.',
+  email_address_not_authorized: 'Não conseguimos enviar o e-mail de confirmação para este endereço. Tente outro e-mail.',
+  over_email_send_rate_limit: 'O servidor atingiu o limite de e-mails de confirmação. Tente de novo em alguns minutos.',
+  over_request_rate_limit: 'Muitas tentativas. Espere um pouco e tente de novo.',
+  signup_disabled: 'Novos cadastros estão desativados no momento.',
+  validation_failed: 'Confira o e-mail e a senha.',
+};
+function authError(e: { message: string; code?: string }): Error {
+  return new Error((e.code && AUTH_ERRORS[e.code]) || e.message);
 }
 
 async function requireUserId(): Promise<string> {
@@ -241,6 +256,24 @@ export const api = {
       disputed: false,
     });
     if (error && !/duplicate key/i.test(error.message)) throw error;
+  },
+
+  /** Troca só a reação de quem chama, de forma atômica (não apaga a do rival). */
+  async setReaction(checkinId: string, emoji: string | null): Promise<Record<string, string>> {
+    const sb = supabase();
+    const { data, error } = await sb.rpc('set_reaction', { p_checkin: checkinId, p_emoji: emoji });
+    if (!error) return (data as Record<string, string> | null) ?? {};
+    // PGRST202 = função ainda não existe no banco (migração pendente): usa o caminho antigo.
+    if (error.code !== 'PGRST202') throw error;
+    const uid = await requireUserId();
+    const { data: row, error: e1 } = await sb.from('checkins').select('reactions').eq('id', checkinId).single<{ reactions: Record<string, string> | null }>();
+    if (e1) throw e1;
+    const reactions = { ...(row.reactions ?? {}) };
+    if (emoji) reactions[uid] = emoji;
+    else delete reactions[uid];
+    const { error: e2 } = await sb.from('checkins').update({ reactions }).eq('id', checkinId);
+    if (e2) throw e2;
+    return reactions;
   },
 
   async updateCheckin(id: string, patch: Partial<Pick<Checkin, 'reactions' | 'disputed'>>) {

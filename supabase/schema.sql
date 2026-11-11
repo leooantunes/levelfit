@@ -209,3 +209,40 @@ create policy "members upload proofs" on storage.objects for insert to authentic
 drop policy if exists "owner deletes proofs" on storage.objects;
 create policy "owner deletes proofs" on storage.objects for delete to authenticated
   using (bucket_id = 'proofs' and owner_id = (select auth.uid())::text);
+
+-- ---------------------------------------------------------------------------
+-- Integridade das provas (migração "checkin_update_guard_and_set_reaction")
+-- O dono não pode contestar/liberar a própria prova, e cada um só mexe na
+-- própria reação. set_reaction troca uma reação de forma atômica.
+-- ---------------------------------------------------------------------------
+
+create or replace function private.guard_checkin_update() returns trigger
+language plpgsql set search_path = '' as $$
+declare uid text := (select auth.uid())::text;
+begin
+  if uid is null then return new; end if; -- painel/service role
+  if new.disputed is distinct from old.disputed and old.player_id = (select auth.uid()) then
+    raise exception 'Você não pode contestar ou liberar a própria prova' using errcode = '42501';
+  end if;
+  if (new.reactions - uid) is distinct from (old.reactions - uid) then
+    raise exception 'Você só pode mudar a sua própria reação' using errcode = '42501';
+  end if;
+  if char_length(coalesce(new.reactions ->> uid, '')) > 16 then
+    raise exception 'Reação inválida' using errcode = '22023';
+  end if;
+  return new;
+end;
+$$;
+create or replace trigger guard_checkin_update before update on public.checkins
+  for each row execute function private.guard_checkin_update();
+
+create or replace function public.set_reaction(p_checkin uuid, p_emoji text)
+returns jsonb language sql security invoker set search_path = '' as $$
+  update public.checkins
+     set reactions = case when p_emoji is null then reactions - (select auth.uid())::text
+                          else reactions || jsonb_build_object((select auth.uid())::text, p_emoji) end
+   where id = p_checkin
+  returning reactions;
+$$;
+revoke all on function public.set_reaction(uuid, text) from public, anon;
+grant execute on function public.set_reaction(uuid, text) to authenticated;

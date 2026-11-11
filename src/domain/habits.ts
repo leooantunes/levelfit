@@ -64,7 +64,7 @@ export const HABITS: Habit[] = [
   {
     id: 'sem-acucar',
     title: 'Zero açúcar',
-    emoji: '🚫🍬',
+    emoji: '🍭',
     description: 'Passe o dia sem doces e bebidas açucaradas.',
     points: 15,
     category: 'nutricao',

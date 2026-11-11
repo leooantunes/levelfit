@@ -90,7 +90,7 @@ export default function ProofScreen() {
             </Txt>
           </View>
         </Row>
-        <Image source={{ uri: checkin.photoUri }} style={styles.photo} contentFit="contain" transition={200} />
+        <Image source={{ uri: checkin.photoUri, cacheKey: checkin.id }}style={styles.photo} contentFit="contain" transition={200} />
         {checkin.note ? (
           <Card>
             <Txt>{checkin.note}</Txt>
