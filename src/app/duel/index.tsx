@@ -3,14 +3,14 @@ import { Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { HabitCard } from '@/components/HabitCard';
-import { Avatar, Card, Chip, haptic, ProgressBar, Row, Screen, Txt } from '@/components/ui';
+import { Card, Chip, ProgressBar, Row, Screen, Txt } from '@/components/ui';
 import { VersusBar } from '@/components/VersusBar';
 import { C, R, S } from '@/constants/theme';
 import { addDays, periodLabel } from '@/domain/dates';
 import { dailyChallenge, getHabit } from '@/domain/habits';
 import { PERFECT_DAY_BONUS, streakMultiplier } from '@/domain/scoring';
 import { usePlayers, useScoreBook, useToday } from '@/hooks/useScoreBook';
-import { useGame } from '@/store/useGame';
+import { useActiveCheckins, useActiveDuel, useGame } from '@/store/useGame';
 
 function taunt(diff: number, oppName: string, done: number, total: number) {
   if (total > 0 && done === total) return 'Dia perfeito! Você é uma máquina 🤖';
@@ -22,17 +22,15 @@ function taunt(diff: number, oppName: string, done: number, total: number) {
 }
 
 export default function TodayScreen() {
-  const duel = useGame((s) => s.duel)!;
-  const checkins = useGame((s) => s.checkins);
-  const mode = useGame((s) => s.mode);
+  const duel = useActiveDuel();
+  const checkins = useActiveCheckins();
   const syncing = useGame((s) => s.syncing);
   const syncError = useGame((s) => s.syncError);
-  const refresh = useGame((s) => s.refresh);
-  const setActivePlayer = useGame((s) => s.setActivePlayer);
-  const book = useScoreBook()!;
+  const refreshDuel = useGame((s) => s.refreshDuel);
+  const book = useScoreBook();
   const today = useToday();
   const { me, opponent } = usePlayers();
-  if (!me) return null;
+  if (!duel || !book || !me) return null;
 
   const myDay = book.day(me.id, today);
   const oppDay = opponent ? book.day(opponent.id, today) : null;
@@ -49,49 +47,23 @@ export default function TodayScreen() {
 
   return (
     <Screen
-      refreshControl={
-        mode === 'online' ? <RefreshControl refreshing={syncing} onRefresh={refresh} tintColor={C.primary} /> : undefined
-      }>
+      refreshControl={<RefreshControl refreshing={syncing} onRefresh={() => refreshDuel(duel.id)} tintColor={C.primary} />}>
+      <Pressable onPress={() => router.dismissTo('/')} hitSlop={12} accessibilityRole="button" style={{ alignSelf: 'flex-start' }}>
+        <Txt variant="dim">← Meus duelos</Txt>
+      </Pressable>
       <Row style={{ justifyContent: 'space-between' }}>
-        <View>
-          <Txt variant="label" color={C.primary}>
-            ⚡ Level Fit · {duel.name}
+        <View style={{ flex: 1 }}>
+          <Txt variant="label" color={C.primary} numberOfLines={1}>
+            ⚡ {duel.name}
           </Txt>
           <Txt variant="title">{periodLabel('day', today, today)}</Txt>
         </View>
-        {mode === 'online' ? (
-          <Chip
-            label={syncError ? '⚠️ offline' : syncing ? '⟳ sincronizando' : '● online'}
-            color={syncError ? C.warning + '33' : C.primary + '22'}
-            textColor={syncError ? C.warning : C.primary}
-          />
-        ) : null}
+        <Chip
+          label={syncError ? '⚠️ offline' : syncing ? '⟳ sincronizando' : '● online'}
+          color={syncError ? C.warning + '33' : C.primary + '22'}
+          textColor={syncError ? C.warning : C.primary}
+        />
       </Row>
-
-      {mode === 'local' && duel.players.length > 1 ? (
-        <Card style={{ paddingVertical: S.md }}>
-          <Txt variant="label">Quem está com o celular?</Txt>
-          <Row gap={S.md}>
-            {duel.players.map((p) => {
-              const active = p.id === me.id;
-              return (
-                <Pressable
-                  key={p.id}
-                  onPress={() => {
-                    haptic();
-                    setActivePlayer(p.id);
-                  }}
-                  style={[styles.playerPick, active && { borderColor: p.color, backgroundColor: p.color + '22' }]}>
-                  <Avatar emoji={p.avatar} color={p.color} size={32} />
-                  <Txt variant="h3" style={{ opacity: active ? 1 : 0.6 }}>
-                    {p.name}
-                  </Txt>
-                </Pressable>
-              );
-            })}
-          </Row>
-        </Card>
-      ) : null}
 
       <Card>
         <VersusBar
@@ -169,15 +141,5 @@ export default function TodayScreen() {
 }
 
 const styles = StyleSheet.create({
-  playerPick: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: S.sm,
-    padding: S.sm,
-    borderRadius: R.md,
-    borderWidth: 2,
-    borderColor: C.border,
-  },
   tip: { padding: S.md, borderRadius: R.md, backgroundColor: C.surface, opacity: 0.8 },
 });

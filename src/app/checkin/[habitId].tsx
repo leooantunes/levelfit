@@ -12,13 +12,13 @@ import { formatTime } from '@/domain/dates';
 import { CHALLENGE_MULTIPLIER, dailyChallenge, getHabit } from '@/domain/habits';
 import { usePlayers, useToday } from '@/hooks/useScoreBook';
 import { pickProofPhoto, takeProofPhoto } from '@/lib/photos';
-import { useGame } from '@/store/useGame';
+import { useActiveCheckins, useActiveDuel, useGame } from '@/store/useGame';
 
 export default function CheckinScreen() {
   const { habitId } = useLocalSearchParams<{ habitId: string }>();
   const habit = getHabit(habitId);
-  const duel = useGame((s) => s.duel)!;
-  const checkins = useGame((s) => s.checkins);
+  const duel = useActiveDuel();
+  const checkins = useActiveCheckins();
   const addCheckin = useGame((s) => s.addCheckin);
   const today = useToday();
   const { me, opponent } = usePlayers();
@@ -27,7 +27,7 @@ export default function CheckinScreen() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  if (!habit || !me) return null;
+  if (!habit || !duel || !me) return null;
 
   const isChallenge = !duel.habitIds.includes(habit.id) && dailyChallenge(duel.id, today, duel.habitIds).id === habit.id;
   const pts = habit.points * (isChallenge ? CHALLENGE_MULTIPLIER : 1);

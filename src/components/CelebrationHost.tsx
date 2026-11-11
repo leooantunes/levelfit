@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { periodEnd, previousPeriodKey, toDateKey } from '@/domain/dates';
 import type { Period, PeriodResult } from '@/domain/types';
 import { useScoreBook, useToday } from '@/hooks/useScoreBook';
-import { useActingPlayerId, useGame } from '@/store/useGame';
+import { celebrationTag, useActiveDuel, useGame, useMyId } from '@/store/useGame';
 
 import { Celebration } from './Celebration';
 
@@ -28,8 +28,8 @@ export function CelebrationHost() {
   const today = useToday();
   const celebrated = useGame((s) => s.celebrated);
   const markCelebrated = useGame((s) => s.markCelebrated);
-  const duel = useGame((s) => s.duel);
-  const viewerId = useActingPlayerId();
+  const duel = useActiveDuel();
+  const viewerId = useMyId();
   const { manual, hide } = useCelebration();
   const [dismissed, setDismissed] = useState<string | null>(null);
 
@@ -39,7 +39,7 @@ export function CelebrationHost() {
     return ORDER.map((period) => {
       const key = previousPeriodKey(period, today);
       if (periodEnd(period, key) < startedOn) return null;
-      if (celebrated.includes(`${period}:${key}`)) return null;
+      if (celebrated.includes(celebrationTag(duel.id, period, key))) return null;
       const r = book.result(period, key, today);
       return r.standings.some((s) => s.points > 0) ? r : null;
     }).filter((r): r is PeriodResult => !!r);
@@ -50,14 +50,14 @@ export function CelebrationHost() {
     if (!book || !duel) return;
     for (const period of ORDER) {
       const key = previousPeriodKey(period, today);
-      if (!celebrated.includes(`${period}:${key}`) && !book.result(period, key, today).standings.some((s) => s.points > 0)) {
+      if (!celebrated.includes(celebrationTag(duel.id, period, key)) &&!book.result(period, key, today).standings.some((s) => s.points > 0)) {
         markCelebrated(period, key);
       }
     }
   }, [book, duel, today, celebrated, markCelebrated]);
 
   const current = manual ?? pending[0] ?? null;
-  const currentTag = current ? `${current.period}:${current.key}` : null;
+  const currentTag = current && duel ? celebrationTag(duel.id, current.period, current.key) : null;
 
   return (
     <Celebration

@@ -5,10 +5,10 @@ import { useEffect } from 'react';
 import { AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { CelebrationHost } from '@/components/CelebrationHost';
 import { C } from '@/constants/theme';
 import { syncReminders } from '@/lib/reminders';
-import { backendFor, useGame } from '@/store/useGame';
+import { useGame } from '@/store/useGame';
+import { api } from '@/sync/supabase';
 import { useWidgetSync } from '@/widgets/useWidgetSync';
 
 SplashScreen.preventAutoHideAsync();
@@ -18,26 +18,43 @@ const theme = {
   colors: { ...DarkTheme.colors, background: C.bg, card: C.bg, primary: C.primary, text: C.text, border: C.border },
 };
 
-function useOnlineSync() {
-  const mode = useGame((s) => s.mode);
-  const duelId = useGame((s) => s.duel?.id);
-  const refresh = useGame((s) => s.refresh);
+/** Confere a sessão ao abrir e sai da conta se ela for encerrada. */
+function useSession() {
+  const hydrated = useGame((s) => s.hydrated);
+  const restoreSession = useGame((s) => s.restoreSession);
+  const signOut = useGame((s) => s.signOut);
 
   useEffect(() => {
-    if (mode !== 'online' || !duelId) return;
-    refresh();
-    const unsubscribe = backendFor(mode).subscribe(duelId, refresh);
-    const sub = AppState.addEventListener('change', (s) => s === 'active' && refresh());
-    return () => {
-      unsubscribe();
-      sub.remove();
-    };
-  }, [mode, duelId, refresh]);
+    if (hydrated) restoreSession();
+  }, [hydrated, restoreSession]);
+
+  useEffect(() => api.onSignedOut(() => useGame.getState().account && signOut()), [signOut]);
+}
+
+/** Mantém todos os duelos sincronizados: ao abrir, ao voltar pro app e em tempo real. */
+function useOnlineSync() {
+  const accountId = useGame((s) => s.account?.id);
+  const duelKey = useGame((s) => s.duelOrder.join(','));
+  const refreshAll = useGame((s) => s.refreshAll);
+  const refreshDuel = useGame((s) => s.refreshDuel);
+
+  useEffect(() => {
+    if (!accountId) return;
+    refreshAll();
+    const sub = AppState.addEventListener('change', (s) => s === 'active' && refreshAll());
+    return () => sub.remove();
+  }, [accountId, refreshAll]);
+
+  useEffect(() => {
+    if (!accountId || !duelKey) return;
+    const unsubs = duelKey.split(',').map((id) => api.subscribe(id, () => refreshDuel(id)));
+    return () => unsubs.forEach((u) => u());
+  }, [accountId, duelKey, refreshDuel]);
 }
 
 function useReminders() {
   const { enabled, hour, minute } = useGame((s) => s.reminders);
-  const hasDuel = useGame((s) => !!s.duel);
+  const hasDuel = useGame((s) => s.duelOrder.length > 0);
   useEffect(() => {
     if (hasDuel) syncReminders(enabled, hour, minute).catch(() => {});
   }, [enabled, hour, minute, hasDuel]);
@@ -45,12 +62,13 @@ function useReminders() {
 
 export default function RootLayout() {
   const hydrated = useGame((s) => s.hydrated);
-  const hasDuel = useGame((s) => !!s.duel);
+  const signedIn = useGame((s) => !!s.account);
 
   useEffect(() => {
     if (hydrated) SplashScreen.hideAsync();
   }, [hydrated]);
 
+  useSession();
   useOnlineSync();
   useReminders();
   useWidgetSync();
@@ -62,17 +80,21 @@ export default function RootLayout() {
       <ThemeProvider value={theme}>
         <StatusBar style="light" />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bg } }}>
-          <Stack.Protected guard={hasDuel}>
-            <Stack.Screen name="(tabs)" />
+          <Stack.Protected guard={signedIn}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="new-duel" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="join" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
+            {/* Estas telas usam o duelo aberto; sem ele, voltam para a lista. */}
+            <Stack.Screen name="duel" />
             <Stack.Screen name="checkin/[habitId]" options={{ presentation: 'modal' }} />
             <Stack.Screen name="proof/[id]" options={{ presentation: 'modal' }} />
             <Stack.Screen name="goals" options={{ presentation: 'modal' }} />
           </Stack.Protected>
-          <Stack.Protected guard={!hasDuel}>
-            <Stack.Screen name="onboarding" />
+          <Stack.Protected guard={!signedIn}>
+            <Stack.Screen name="auth" />
           </Stack.Protected>
         </Stack>
-        {hasDuel ? <CelebrationHost /> : null}
       </ThemeProvider>
     </GestureHandlerRootView>
   );

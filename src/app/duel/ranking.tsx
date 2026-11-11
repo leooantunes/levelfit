@@ -8,7 +8,7 @@ import { C, R, S } from '@/constants/theme';
 import { periodKey } from '@/domain/dates';
 import type { Period, PeriodResult } from '@/domain/types';
 import { useScoreBook, useToday } from '@/hooks/useScoreBook';
-import { useGame } from '@/store/useGame';
+import { useActiveDuel } from '@/store/useGame';
 
 const PERIODS: { value: Period; label: string }[] = [
   { value: 'day', label: 'Diário' },
@@ -51,10 +51,11 @@ function Podium({ result }: { result: PeriodResult }) {
 
 export default function RankingScreen() {
   const [period, setPeriod] = useState<Period>('day');
-  const book = useScoreBook()!;
+  const book = useScoreBook();
   const today = useToday();
-  const duel = useGame((s) => s.duel)!;
+  const duel = useActiveDuel();
   const show = useCelebration((s) => s.show);
+  if (!book || !duel) return null;
 
   const current = book.result(period, periodKey(period, today), today);
   const history = book.closedResults(period, today).reverse();

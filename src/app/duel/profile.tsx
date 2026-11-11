@@ -1,12 +1,12 @@
 import { router } from 'expo-router';
-import { Alert, Pressable, Share, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Pressable, Share, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 
 import { Avatar, Button, Card, Chip, haptic, ProgressBar, Row, Screen, Txt } from '@/components/ui';
 import { C, R, S } from '@/constants/theme';
 import { achievementsFor, levelInfo } from '@/domain/progression';
 import { usePlayers, useScoreBook, useToday } from '@/hooks/useScoreBook';
-import { useGame } from '@/store/useGame';
+import { useActiveCheckins, useActiveDuel, useGame } from '@/store/useGame';
 
 function Stat({ label, value, emoji }: { label: string; value: string | number; emoji: string }) {
   return (
@@ -20,19 +20,14 @@ function Stat({ label, value, emoji }: { label: string; value: string | number; 
   );
 }
 
-const HOURS = [18, 19, 20, 21, 22];
-
 export default function ProfileScreen() {
-  const duel = useGame((s) => s.duel)!;
-  const checkins = useGame((s) => s.checkins);
-  const mode = useGame((s) => s.mode);
-  const reminders = useGame((s) => s.reminders);
-  const setReminders = useGame((s) => s.setReminders);
+  const duel = useActiveDuel();
+  const checkins = useActiveCheckins();
   const leaveDuel = useGame((s) => s.leaveDuel);
-  const book = useScoreBook()!;
+  const book = useScoreBook();
   const today = useToday();
   const { me, opponent } = usePlayers();
-  if (!me) return null;
+  if (!duel || !book || !me) return null;
 
   const xp = book.totalPoints(me.id);
   const lvl = levelInfo(xp);
@@ -48,9 +43,20 @@ export default function ProfileScreen() {
     });
 
   const leave = () =>
-    Alert.alert('Sair do duelo?', 'Os dados deste duelo serão removidos deste aparelho.', [
+    Alert.alert('Sair do duelo?', `Você sai de "${duel.name}" e ele some da sua lista. Seus outros duelos continuam.`, [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Sair', style: 'destructive', onPress: leaveDuel },
+      {
+        text: 'Sair',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await leaveDuel(duel.id);
+            router.dismissTo('/');
+          } catch (e) {
+            Alert.alert('Ops!', e instanceof Error ? e.message : String(e));
+          }
+        },
+      },
     ]);
 
   return (
@@ -119,8 +125,8 @@ export default function ProfileScreen() {
           <Txt>{duel.name}</Txt>
         </Row>
         <Row style={{ justifyContent: 'space-between' }}>
-          <Txt variant="dim">Modo</Txt>
-          <Txt>{mode === 'online' ? '🌐 Online' : '📱 Mesmo celular'}</Txt>
+          <Txt variant="dim">Rival</Txt>
+          <Txt>{opponent ? `${opponent.avatar} ${opponent.name}` : 'aguardando…'}</Txt>
         </Row>
         {duel.stake ? (
           <Row style={{ justifyContent: 'space-between' }}>
@@ -128,7 +134,7 @@ export default function ProfileScreen() {
             <Txt>{duel.stake}</Txt>
           </Row>
         ) : null}
-        {mode === 'online' ? (
+        {opponent ? null : (
           <Pressable onPress={share} style={styles.code}>
             <Txt variant="label">Código de convite</Txt>
             <Txt variant="title" color={C.primary} style={{ letterSpacing: 6 }}>
@@ -136,46 +142,8 @@ export default function ProfileScreen() {
             </Txt>
             <Txt variant="small">Toque para compartilhar</Txt>
           </Pressable>
-        ) : null}
+        )}
         <Button title="Editar metas e aposta" icon="🎯" variant="secondary" onPress={() => router.push('/goals')} />
-      </Card>
-
-      <Card>
-        <Row style={{ justifyContent: 'space-between' }}>
-          <View style={{ flex: 1 }}>
-            <Txt variant="h3">Lembretes diários</Txt>
-            <Txt variant="small">12:30 e no horário da noite</Txt>
-          </View>
-          <Switch
-            value={reminders.enabled}
-            onValueChange={(v) => setReminders({ enabled: v })}
-            trackColor={{ true: C.primary, false: C.surface2 }}
-          />
-        </Row>
-        {reminders.enabled ? (
-          <Row style={{ justifyContent: 'space-between' }}>
-            {HOURS.map((h) => (
-              <Pressable
-                key={h}
-                onPress={() => {
-                  haptic();
-                  setReminders({ hour: h, minute: 0 });
-                }}
-                style={[styles.hour, reminders.hour === h && { backgroundColor: C.primary }]}>
-                <Txt variant="h3" color={reminders.hour === h ? C.bg : C.text}>
-                  {h}h
-                </Txt>
-              </Pressable>
-            ))}
-          </Row>
-        ) : null}
-      </Card>
-
-      <Card>
-        <Txt variant="h3">📱 Widget</Txt>
-        <Txt variant="dim">
-          Segure a tela inicial do celular, toque em “Widgets” e adicione o Level Fit para ver o placar do dia sem abrir o app.
-        </Txt>
       </Card>
 
       <Button title="Sair do duelo" variant="ghost" onPress={leave} />
@@ -199,5 +167,4 @@ const styles = StyleSheet.create({
   badges: { flexDirection: 'row', flexWrap: 'wrap', gap: S.sm },
   badge: { width: '30%', flexGrow: 1, alignItems: 'center', gap: 4, padding: S.sm, borderRadius: R.md, backgroundColor: C.surface2 },
   code: { alignItems: 'center', padding: S.md, borderRadius: R.md, backgroundColor: C.surface2, gap: 2 },
-  hour: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: R.pill, backgroundColor: C.surface2 },
 });

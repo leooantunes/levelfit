@@ -21,16 +21,21 @@ Feito com **React Native + Expo SDK 58** (Expo Router, Reanimated, `expo-widgets
 | 🔔 **Lembretes** | Notificações locais às 12:30 e num horário escolhido à noite. |
 | 📱 **Widget** | Placar do dia, metas feitas e sequência. iOS: pequeno, médio, grande e tela de bloqueio. Android: 4x2. |
 
-## Modos de jogo
+## Como funciona
 
-- **No mesmo celular (offline):** os dois jogadores usam o mesmo aparelho e escolhem quem está postando na tela "Hoje". Não precisa configurar nada.
-- **Online (cada um no seu celular):** usa o [Supabase](https://supabase.com) (login anônimo, banco, storage privado para as fotos e realtime). Um cria o duelo e o outro entra com o código de 6 letras.
+1. **Crie uma conta** com e-mail e senha, escolhendo nome, avatar e cor.
+2. Na **tela inicial** aparecem todos os seus duelos, com o placar do dia de cada um.
+3. **Novo duelo:** escolha as metas e a aposta. Você recebe um código de 6 letras para mandar pro rival.
+4. **Entrar:** digite o código que alguém te mandou.
+5. Toque num duelo para abrir as abas **Hoje · Ranking · Provas · Duelo**.
 
-### Configurar o modo online
+Você pode ter quantos duelos quiser ao mesmo tempo, cada um com outra pessoa, outras metas e outra aposta. Cada duelo tem 2 jogadores. Tudo fica no [Supabase](https://supabase.com) (auth, banco, storage privado para as fotos e realtime), então dá para entrar de qualquer celular.
 
-1. Crie um projeto no Supabase e ative **Authentication → Sign In / Providers → Anonymous sign-ins**.
-2. Rode [`supabase/schema.sql`](supabase/schema.sql) no SQL Editor. Ele cria as tabelas, o RLS, as funções `create_duel`/`join_duel`, o realtime e o bucket `proofs`.
-3. Copie `.env.example` para `.env` e preencha a URL e a anon key.
+### Configurar o Supabase
+
+1. Crie um projeto no Supabase. Em **Authentication → Sign In / Providers**, deixe **Email** habilitado. Para testar sem precisar confirmar o e-mail, desligue **Confirm email**.
+2. Rode [`supabase/schema.sql`](supabase/schema.sql) no SQL Editor. Ele cria as tabelas, o RLS, as funções `create_duel`/`join_duel`, o realtime e o bucket `proofs`, e pode ser rodado de novo sem problema.
+3. Copie `.env.example` para `.env` e preencha a URL e a publishable key (Project Settings → API Keys). Reinicie o Metro depois de mudar o `.env`.
 
 ## Rodando
 
@@ -82,21 +87,25 @@ npm run lint
 ```
 src/
   app/                 telas (Expo Router)
-    (tabs)/            Hoje · Ranking · Provas · Perfil
-    onboarding.tsx     criação do jogador, modo, metas e aposta
+    auth.tsx           criar conta / entrar
+    index.tsx          tela inicial: lista de duelos
+    new-duel.tsx       criar duelo (metas e aposta)
+    join.tsx           entrar num duelo com código
+    settings.tsx       conta: perfil, lembretes, sair
+    duel/              abas do duelo aberto: Hoje · Ranking · Provas · Duelo
     checkin/[habitId]  postar prova com foto
     proof/[id]         ver prova, reagir, contestar, apagar
     goals.tsx          editar metas e aposta
   domain/              regras puras e testadas (hábitos, datas, pontuação, níveis)
   store/useGame.ts     estado (zustand + AsyncStorage), otimista com fila de sync
-  sync/                backend local e Supabase
+  sync/supabase.ts     conta, duelos, provas e realtime
   widgets/             widget SwiftUI (iOS) e Jetpack Compose (Android)
   components/          UI, placar VS, cards, confete, comemoração
-supabase/schema.sql    banco do modo online
+supabase/schema.sql    banco, RLS, funções e storage
 ```
 
 ## Observações
 
 - O placar é sempre **recalculado a partir dos check-ins**, então os dois aparelhos chegam ao mesmo resultado. Por isso, mudar as metas recalcula também os dias anteriores.
-- No modo online, as fotos ficam num bucket privado e são exibidas com URLs assinadas (7 dias). Suas próprias fotos também ficam salvas no aparelho.
+- As fotos ficam num bucket privado e são exibidas com URLs assinadas (7 dias). Suas próprias fotos também ficam salvas no aparelho.
 - Check-ins feitos sem internet ficam na fila e sobem no próximo sync. Para forçar, puxe a tela para baixo.

@@ -8,22 +8,21 @@ import { C, S } from '@/constants/theme';
 import { periodLabel } from '@/domain/dates';
 import type { Checkin } from '@/domain/types';
 import { usePlayers, useToday } from '@/hooks/useScoreBook';
-import { useGame } from '@/store/useGame';
+import { useActiveCheckins, useActiveDuel, useGame } from '@/store/useGame';
 
 type Filter = 'all' | 'me' | 'rival';
 type Item = { type: 'header'; key: string; label: string } | { type: 'proof'; key: string; checkin: Checkin };
 
 export default function FeedScreen() {
-  const checkins = useGame((s) => s.checkins);
-  const duel = useGame((s) => s.duel)!;
+  const checkins = useActiveCheckins();
+  const duel = useActiveDuel();
   const react = useGame((s) => s.react);
-  const mode = useGame((s) => s.mode);
   const syncing = useGame((s) => s.syncing);
-  const refresh = useGame((s) => s.refresh);
+  const refreshDuel = useGame((s) => s.refreshDuel);
   const { me } = usePlayers();
   const today = useToday();
   const [filter, setFilter] = useState<Filter>('all');
-  if (!me) return null;
+  if (!duel || !me) return null;
 
   const visible = checkins
     .filter((c) => (filter === 'all' ? true : filter === 'me' ? c.playerId === me.id : c.playerId !== me.id))
@@ -45,9 +44,7 @@ export default function FeedScreen() {
         data={items}
         keyExtractor={(i) => i.key}
         contentContainerStyle={{ padding: S.lg, paddingTop: Platform.OS === 'web' ? 72 : S.lg, paddingBottom: 120, gap: S.md }}
-        refreshControl={
-          mode === 'online' ? <RefreshControl refreshing={syncing} onRefresh={refresh} tintColor={C.primary} /> : undefined
-        }
+        refreshControl={<RefreshControl refreshing={syncing} onRefresh={() => refreshDuel(duel.id)} tintColor={C.primary} />}
         ListHeaderComponent={
           <View style={{ gap: S.lg, marginBottom: S.sm }}>
             <Txt variant="title">Provas</Txt>

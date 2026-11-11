@@ -3,7 +3,7 @@ import { AppState } from 'react-native';
 
 import { todayKey } from '@/domain/dates';
 import { ScoreBook } from '@/domain/scoring';
-import { useActingPlayerId, useGame } from '@/store/useGame';
+import { useActiveCheckins, useActiveDuel, useMyId } from '@/store/useGame';
 
 /** Chave do dia atual que se atualiza quando o app volta ao foreground ou vira a meia-noite. */
 export function useToday(): string {
@@ -20,17 +20,18 @@ export function useToday(): string {
   return today;
 }
 
+/** Placar do duelo aberto. */
 export function useScoreBook(): ScoreBook | null {
-  const duel = useGame((s) => s.duel);
-  const checkins = useGame((s) => s.checkins);
+  const duel = useActiveDuel();
+  const checkins = useActiveCheckins();
   return useMemo(() => (duel ? new ScoreBook(duel, checkins) : null), [duel, checkins]);
 }
 
-/** Jogador atual (quem age) e o adversário. */
+/** Você e o adversário no duelo aberto. */
 export function usePlayers() {
-  const duel = useGame((s) => s.duel);
-  const actingId = useActingPlayerId();
-  const me = duel?.players.find((p) => p.id === actingId) ?? duel?.players[0] ?? null;
-  const opponent = duel?.players.find((p) => p.id !== me?.id) ?? null;
+  const duel = useActiveDuel();
+  const myId = useMyId();
+  const me = duel?.players.find((p) => p.id === myId) ?? null;
+  const opponent = duel?.players.find((p) => p.id !== myId) ?? null;
   return { me, opponent };
 }

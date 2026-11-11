@@ -9,21 +9,19 @@ import { C, R, S } from '@/constants/theme';
 import { formatTime, periodLabel } from '@/domain/dates';
 import { getHabit } from '@/domain/habits';
 import { usePlayers, useToday } from '@/hooks/useScoreBook';
-import { useGame } from '@/store/useGame';
+import { useActiveCheckins, useActiveDuel, useGame } from '@/store/useGame';
 
 export default function ProofScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const checkin = useGame((s) => s.checkins.find((c) => c.id === id));
-  const duel = useGame((s) => s.duel)!;
-  const deviceOwnerId = useGame((s) => s.meId);
-  const mode = useGame((s) => s.mode);
+  const checkin = useActiveCheckins().find((c) => c.id === id);
+  const duel = useActiveDuel();
   const react = useGame((s) => s.react);
   const toggleDispute = useGame((s) => s.toggleDispute);
   const deleteCheckin = useGame((s) => s.deleteCheckin);
   const { me } = usePlayers();
   const today = useToday();
 
-  if (!checkin || !me) {
+  if (!checkin || !duel || !me) {
     return (
       <SafeAreaView style={styles.center}>
         <Txt variant="dim">Prova não encontrada.</Txt>
@@ -35,8 +33,7 @@ export default function ProofScreen() {
   const habit = getHabit(checkin.habitId);
   const owner = duel.players.find((p) => p.id === checkin.playerId);
   const isMine = checkin.playerId === me.id;
-  // Online, só o dono do aparelho pode apagar a própria prova.
-  const canDelete = isMine && (mode === 'local' || checkin.playerId === deviceOwnerId);
+  const canDelete = isMine;
 
   const dispute = () => {
     if (checkin.disputed) {

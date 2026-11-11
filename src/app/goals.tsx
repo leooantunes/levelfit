@@ -6,13 +6,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { GoalPicker } from '@/components/GoalPicker';
 import { Button, Card, haptic, Row, Txt } from '@/components/ui';
 import { C, R, S } from '@/constants/theme';
-import { useGame } from '@/store/useGame';
+import { useActiveDuel, useGame } from '@/store/useGame';
 
 export default function GoalsScreen() {
-  const duel = useGame((s) => s.duel)!;
+  const duel = useActiveDuel();
   const updateDuel = useGame((s) => s.updateDuel);
-  const [habitIds, setHabitIds] = useState(duel.habitIds);
-  const [stake, setStake] = useState(duel.stake ?? '');
+  const [habitIds, setHabitIds] = useState(duel?.habitIds ?? []);
+  const [stake, setStake] = useState(duel?.stake ?? '');
 
   const save = async () => {
     haptic('success');
