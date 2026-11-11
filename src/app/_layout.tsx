@@ -8,7 +8,7 @@ import { AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { C } from '@/constants/theme';
-import { forgetPurchaser, identifyPurchaser } from '@/lib/premium';
+import { forgetPurchaser, hasPro, identifyPurchaser, onCustomerInfoChange } from '@/lib/premium';
 import { syncReminders } from '@/lib/reminders';
 import { useGame } from '@/store/useGame';
 import { api } from '@/sync/supabase';
@@ -38,8 +38,20 @@ function useSession() {
 function usePurchaser() {
   const accountId = useGame((s) => s.account?.id);
   useEffect(() => {
-    if (accountId) identifyPurchaser(accountId);
-    else forgetPurchaser();
+    if (!accountId) {
+      forgetPurchaser();
+      return;
+    }
+    let unsubscribe = () => {};
+    identifyPurchaser(accountId).then(() => {
+      // Assinatura mudou fora do app (renovou, expirou, comprou em outro aparelho):
+      // se o RevenueCat discorda do plano em cache, o servidor relê e corrige.
+      unsubscribe = onCustomerInfoChange((info) => {
+        const { plan, syncPlanFromStore } = useGame.getState();
+        if (hasPro(info) !== plan.premium) syncPlanFromStore().catch(() => {});
+      });
+    });
+    return () => unsubscribe();
   }, [accountId]);
 }
 

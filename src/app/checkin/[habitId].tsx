@@ -134,7 +134,14 @@ export default function CheckinScreen() {
                         Conecte o {HEALTH_SOURCE} e esta meta conta sozinha quando seu relógio registrar{' '}
                         {formatHealthValue({ metric: healthGoal.metric, value: healthGoal.target })}.
                       </Txt>
-                      <Button title="Conectar relógio" icon="⌚" variant="secondary" loading={connecting} onPress={connect} />
+                      <Button
+                        title="Conectar relógio"
+                        size="sm"
+                        variant="secondary"
+                        loading={connecting}
+                        onPress={connect}
+                        style={{ alignSelf: 'flex-start' }}
+                      />
                     </>
                   )}
                 </Card>

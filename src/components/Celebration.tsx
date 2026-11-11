@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Modal, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Modal, Platform, StyleSheet, View } from 'react-native';
 import Animated, {
   FadeIn,
   FadeInUp,
@@ -15,8 +15,10 @@ import Animated, {
 
 import { C, hardShadow, R, S, STROKE } from '@/constants/theme';
 import type { PeriodResult } from '@/domain/types';
+import { shareResultToStory } from '@/lib/shareStory';
 
 import { Confetti } from './Confetti';
+import { STORY_WIDTH, StoryCard, type StoryCardRef } from './StoryCard';
 import { Avatar, Button, haptic, Row, Txt } from './ui';
 
 const TROPHY = { day: '🥊', week: '🏆', month: '👑' } as const;
@@ -26,13 +28,17 @@ export function Celebration({
   result,
   viewerId,
   stake,
+  duelName,
   onClose,
 }: {
   result: PeriodResult | null;
   viewerId: string | null;
   stake?: string;
+  duelName: string;
   onClose: () => void;
 }) {
+  const storyRef = useRef<StoryCardRef>(null);
+  const [sharing, setSharing] = useState(false);
   const scale = useSharedValue(0);
   const wiggle = useSharedValue(0);
   const glow = useSharedValue(0.6);
@@ -56,6 +62,19 @@ export function Celebration({
 
   if (!result) return null;
   const { winner, tie, standings, period, label } = result;
+  // Story só para semana e mês (o round diário é rápido demais para virar post).
+  const canShare = period !== 'day' && Platform.OS !== 'web' && (!!winner || tie);
+
+  const share = async () => {
+    setSharing(true);
+    try {
+      if (await shareResultToStory(storyRef)) haptic('success');
+    } catch (e) {
+      Alert.alert('Ops!', e instanceof Error ? e.message : 'Não foi possível compartilhar agora.');
+    } finally {
+      setSharing(false);
+    }
+  };
   const viewerWon = !!winner && winner.id === viewerId;
   const loser = winner ? standings.find((s) => s.player.id !== winner.id)?.player : null;
 
@@ -70,6 +89,12 @@ export function Celebration({
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+      {canShare ? (
+        // Fora da tela: só existe para virar a imagem do Story.
+        <View style={styles.offscreen} pointerEvents="none">
+          <StoryCard ref={storyRef} result={result} duelName={duelName} stake={stake} />
+        </View>
+      ) : null}
       <Animated.View entering={FadeIn} style={styles.overlay}>
         {winner ? <Confetti count={period === 'month' ? 90 : period === 'week' ? 70 : 45} /> : null}
         <View style={styles.center}>
@@ -113,7 +138,10 @@ export function Celebration({
             </Animated.View>
           ) : null}
 
-          <Animated.View entering={FadeInUp.delay(1300)} style={{ alignSelf: 'stretch' }}>
+          <Animated.View entering={FadeInUp.delay(1300)} style={{ alignSelf: 'stretch', gap: S.md }}>
+            {canShare ? (
+              <Button title="Postar no Story" icon="📸" variant="secondary" loading={sharing} onPress={share} />
+            ) : null}
             <Button title={viewerWon ? 'Defender o cinturão 🥊' : 'Quero revanche! 🔥'} onPress={onClose} />
           </Animated.View>
         </View>
@@ -124,6 +152,7 @@ export function Celebration({
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(30,18,16,0.97)', justifyContent: 'center' },
+  offscreen: { position: 'absolute', left: -STORY_WIDTH * 3, top: 0 },
   center: { padding: S.xl, alignItems: 'center', gap: S.xl },
   trophyWrap: { width: 200, height: 200, alignItems: 'center', justifyContent: 'center' },
   glow: { position: 'absolute', width: 200, height: 200, borderRadius: 100 },

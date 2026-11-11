@@ -16,7 +16,9 @@
 // verify_jwt = false: a autenticação é feita aqui dentro.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const ENTITLEMENT = 'premium';
+// Entitlement do painel do RevenueCat que libera o Pro (mensal, anual e vitalício).
+// Vitalício = expires_date null → is_lifetime.
+const ENTITLEMENT = 'levelfit_pro';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function json(body: unknown, status = 200) {

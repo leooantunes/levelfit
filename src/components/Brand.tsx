@@ -40,11 +40,12 @@ export function Mascot({ size = 120, idle = true }: { size?: number; idle?: bool
 }
 
 /** Logotipo de pôster: "LEVEL" em cacau + "FIT" em brasa, com sombra chapada. */
-export function Wordmark({ size = 44 }: { size?: number }) {
+/** `dark`: versão para fundo escuro (ex.: arte do Story), com "LEVEL" claro. */
+export function Wordmark({ size = 44, dark = false }: { size?: number; dark?: boolean }) {
   const shadow = { textShadowColor: C.ink, textShadowOffset: { width: 0, height: size / 14 }, textShadowRadius: 0.01 };
   return (
     <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-      <Text style={{ fontFamily: F.display, fontSize: size, color: C.ink }}>LEVEL</Text>
+      <Text style={{ fontFamily: F.display, fontSize: size, color: dark ? C.nightText : C.ink }}>LEVEL</Text>
       <Text style={{ fontFamily: F.display, fontSize: size, color: C.primary, marginLeft: size * 0.2, ...shadow }}>
         FIT
       </Text>

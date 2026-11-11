@@ -82,10 +82,13 @@ export function Button({
   loading,
   disabled,
   style,
+  size = 'md',
   ...rest
 }: Omit<PressableProps, 'style'> & {
   title: string;
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  /** sm: botão compacto para ações dentro de cartões. */
+  size?: 'md' | 'sm';
   icon?: string;
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -108,6 +111,7 @@ export function Button({
       <Animated.View
         style={[
           styles.button,
+          size === 'sm' && styles.buttonSm,
           { backgroundColor: bg, opacity: disabled ? 0.45 : 1 },
           variant === 'ghost' ? { borderStyle: 'dashed', boxShadow: 'none' } : null,
           anim,
@@ -116,7 +120,7 @@ export function Button({
         {loading ? (
           <ActivityIndicator color={fg} />
         ) : (
-          <Text style={[styles.buttonText, { color: fg }]}>
+          <Text style={[styles.buttonText, size === 'sm' && styles.buttonTextSm, { color: fg }]}>
             {icon ? `${icon}  ` : ''}
             {title}
           </Text>
@@ -241,6 +245,8 @@ const styles = StyleSheet.create({
     boxShadow: hardShadow(4),
   },
   buttonText: { fontSize: 16, fontFamily: F.heavy, letterSpacing: 0.8, textTransform: 'uppercase' },
+  buttonSm: { minHeight: 38, paddingHorizontal: S.md, borderRadius: R.sm, boxShadow: hardShadow(3) },
+  buttonTextSm: { fontSize: 12, letterSpacing: 0.5 },
   segmented: {
     flexDirection: 'row',
     backgroundColor: C.surface,

@@ -79,14 +79,14 @@ function HealthCard() {
       </Txt>
       <Txt variant="small">{metas.join('  ·  ')}</Txt>
       {enabled ? (
-        <>
-          <Button title="Conferir agora" icon="⌚" variant="secondary" loading={busy} onPress={checkNow} />
-          <Pressable onPress={openHealthSettings} hitSlop={8} style={{ alignSelf: 'center' }}>
+        <Row style={{ justifyContent: 'space-between' }}>
+          <Button title="Conferir agora" size="sm" variant="secondary" loading={busy} onPress={checkNow} />
+          <Pressable onPress={openHealthSettings} hitSlop={8}>
             <Txt variant="small" color={C.primaryDark}>
-              Gerenciar permissões no {HEALTH_SOURCE}
+              Permissões
             </Txt>
           </Pressable>
-        </>
+        </Row>
       ) : null}
     </Card>
   );
@@ -243,7 +243,13 @@ export default function SettingsScreen() {
           {plan.premium ? 'Duelos ilimitados.' : `${FREE_DUEL_LIMIT} duelo por vez. Assine o Premium para ter duelos ilimitados.`}
         </Txt>
         {plan.premium ? (
-          <Button title="Gerenciar assinatura" variant="ghost" onPress={openManageSubscriptions} />
+          plan.isLifetime ? null : (
+            <Button
+              title="Gerenciar assinatura"
+              variant="ghost"
+              onPress={() => openManageSubscriptions(() => useGame.getState().syncPlanFromStore().catch(() => {}))}
+            />
+          )
         ) : (
           <Button title="Conhecer o Premium" icon="🏆" onPress={() => router.push('/premium')} />
         )}

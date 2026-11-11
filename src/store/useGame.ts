@@ -22,7 +22,7 @@ import {
   persistPhoto,
   resolveLocalPhoto,
 } from "@/lib/photos";
-import { buyPackage, FREE_DUEL_LIMIT, restorePurchases } from "@/lib/premium";
+import { FREE_DUEL_LIMIT, presentPaywall, restorePurchases, type PaywallOutcome } from "@/lib/premium";
 import {
   api,
   FREE_PLAN,
@@ -33,7 +33,6 @@ import {
   type ReportReason,
   type Snapshot,
 } from "@/sync/supabase";
-import type { PurchasesPackage } from "react-native-purchases";
 
 type Reminders = { enabled: boolean; hour: number; minute: number };
 type DuelPatch = Partial<Pick<Duel, "habitIds" | "stake" | "name">>;
@@ -108,8 +107,11 @@ type GameState = {
 
   refreshPlan: () => Promise<void>;
   /** Compra o Premium na loja e confirma no servidor. Retorna false se a pessoa cancelou. */
-  subscribePremium: (pkg: PurchasesPackage) => Promise<boolean>;
+  /** Mostra o Paywall do RevenueCat e, se comprou/restaurou, confirma no servidor. */
+  openPaywall: () => Promise<PaywallOutcome>;
   restorePremium: () => Promise<boolean>;
+  /** Pede ao servidor para reler a assinatura no RevenueCat (depois de comprar, restaurar ou mudar). */
+  syncPlanFromStore: () => Promise<void>;
 };
 
 const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -331,18 +333,24 @@ export const useGame = create<GameState>()(
           }
         },
 
-        async subscribePremium(pkg) {
-          const bought = await buyPackage(pkg);
-          if (!bought) return false;
-          set({ plan: await api.syncPlan() });
-          return true;
+        async openPaywall() {
+          const outcome = await presentPaywall();
+          if (outcome === 'purchased' || outcome === 'restored' || outcome === 'already-pro') {
+            // A loja confirmou; o servidor confere no RevenueCat e libera os duelos.
+            await get().syncPlanFromStore();
+          }
+          return outcome;
         },
 
         async restorePremium() {
           await restorePurchases();
-          const plan = await api.syncPlan();
-          set({ plan });
-          return plan.premium;
+          await get().syncPlanFromStore();
+          return get().plan.premium;
+        },
+
+        async syncPlanFromStore() {
+          if (!get().account) return;
+          set({ plan: await api.syncPlan() });
         },
 
         async refreshAll() {

@@ -115,18 +115,27 @@ supabase/schema.sql    banco, RLS, funções e storage
 - **Denúncias** (tela da prova → Denunciar) vão para a tabela `reports`, que só a equipe vê pelo painel do Supabase. A Apple espera que denúncias sejam analisadas em até 24 h: confira a tabela e marque `status = 'resolvida'`.
 - **Bloquear** (aba Perfil do duelo → Bloquear, ou depois de denunciar uma prova) chama a RPC `block_player`: guarda o bloqueio na tabela `blocks`, apaga as provas de quem bloqueou naquele duelo e tira a pessoa dele. `join_duel` recusa juntar duas pessoas que se bloquearam. A lista e o desbloqueio ficam em Minha conta.
 - **Relógio** (Minha conta → ⌚ Relógio): lê o Apple Health (iOS, [`health.ios.ts`](src/lib/health.ios.ts)) ou o Health Connect (Android, [`health.android.ts`](src/lib/health.android.ts)). Ao abrir o app, confere hoje e ontem; meta batida vira prova automática sem foto (coluna `health`), uma por duelo/meta/dia (id determinístico), e o rival pode contestar. Metas e alvos em [`healthGoals.ts`](src/domain/healthGoals.ts): 10 mil passos, 30 min de treino, 7h de sono, 10 min de meditação e 20 min ao ar livre (só Apple Watch). Dados digitados à mão no app de saúde não contam. Precisa de build nativo novo (não roda no Expo Go). Na Play Store, os dados de saúde exigem a declaração de Health Connect no Play Console.
+- **Story do Instagram:** na comemoração da semana e do mês, "Postar no Story" gera uma arte 1080x1920 ([`StoryCard.tsx`](src/components/StoryCard.tsx)) com `react-native-view-shot` e abre o editor de Stories do Instagram via `react-native-share`. Exige `EXPO_PUBLIC_FACEBOOK_APP_ID` (regra da Meta); sem ele, ou sem Instagram instalado, abre o menu de compartilhar do celular.
 - **Privacidade e suporte:** a política está em [`src/lib/privacyPolicy.ts`](src/lib/privacyPolicy.ts) (tela `/privacy`) e em [`docs/privacy-policy.md`](docs/privacy-policy.md) para publicar numa URL pública. Com `EXPO_PUBLIC_PRIVACY_POLICY_URL` definida, os links abrem a página publicada; sem ela, abrem a tela do app. `EXPO_PUBLIC_SUPPORT_EMAIL` mostra o contato em Minha conta e na política.
 
-## Premium (R$ 19,90/mês)
+## Premium (Level Fit Pro)
 
-Grátis: **1 duelo por vez** (criado ou entrado com código). Premium: duelos ilimitados. A regra vale no banco (`create_duel`/`join_duel`), não só na tela.
+Grátis: **1 duelo por vez** (criado ou entrado com código). Pro: duelos ilimitados. A regra vale no banco (`create_duel`/`join_duel`), não só na tela.
 
-Como a cobrança é dentro do app, Apple e Google exigem as compras da própria loja. O app usa o [RevenueCat](https://www.revenuecat.com) (`react-native-purchases`), e o servidor confere a assinatura com a função [`premium-sync`](supabase/functions/premium-sync/index.ts).
+Como a cobrança é dentro do app, Apple e Google exigem as compras da própria loja. O app usa o [RevenueCat](https://www.revenuecat.com) (`react-native-purchases` + `react-native-purchases-ui`): a compra acontece no **Paywall** do RevenueCat e "Gerenciar assinatura" abre o **Customer Center**. O servidor confere a assinatura com a função [`premium-sync`](supabase/functions/premium-sync/index.ts). Código em [`src/lib/premium.ts`](src/lib/premium.ts).
+
+Planos (todos dão o entitlement **`levelfit_pro`**):
+
+| Produto | Tipo | Pacote na offering |
+|---|---|---|
+| `monthly` | assinatura mensal | `$rc_monthly` |
+| `yearly` | assinatura anual | `$rc_annual` |
+| `lifetime` | compra única (não consumível) | `$rc_lifetime` |
 
 Para ativar:
 
-1. **Lojas:** crie a assinatura mensal de R$ 19,90 no App Store Connect (grupo de assinaturas) e no Google Play Console (mesmo ID de produto, ex.: `levelfit_premium_monthly`).
-2. **RevenueCat:** crie o projeto com os apps iOS e Android, importe o produto, crie o entitlement **`premium`** e uma offering padrão com o pacote **mensal**.
-3. **App:** coloque as chaves públicas do SDK em `EXPO_PUBLIC_REVENUECAT_IOS_KEY` e `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` (no `.env` e no `eas env`) e gere um novo build.
+1. **Testar sem loja (Test Store):** no RevenueCat, crie os 3 produtos na Test Store, o entitlement `levelfit_pro` (com os 3 produtos) e a offering `default` (marcada como *current*) com os 3 pacotes; crie um Paywall para essa offering. Coloque a chave `test_...` em `EXPO_PUBLIC_REVENUECAT_TEST_KEY` no `.env`. Ela só é usada em desenvolvimento (`__DEV__`).
+2. **Lojas (produção):** crie `monthly` e `yearly` num grupo de assinaturas no App Store Connect e no Google Play Console, e `lifetime` como compra não consumível / produto único. Importe no RevenueCat e anexe ao mesmo entitlement e offering.
+3. **App:** chaves públicas das lojas em `EXPO_PUBLIC_REVENUECAT_IOS_KEY` (`appl_...`) e `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` (`goog_...`), no `.env` e no `eas env`, e gere um novo build.
 4. **Supabase → Edge Functions → Secrets:** `REVENUECAT_SECRET_API_KEY` (chave secreta do RevenueCat) e `REVENUECAT_WEBHOOK_AUTH` (um valor aleatório longo).
 5. **RevenueCat → Integrations → Webhooks:** URL `https://<projeto>.supabase.co/functions/v1/premium-sync` e o header Authorization com o mesmo valor de `REVENUECAT_WEBHOOK_AUTH`.

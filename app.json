@@ -140,6 +140,13 @@
             "minSdkVersion": 26
           }
         }
+      ],
+      [
+        "react-native-share",
+        {
+          "ios": ["instagram", "instagram-stories"],
+          "android": ["com.instagram.android"]
+        }
       ]
     ],
     "experiments": {

@@ -64,6 +64,7 @@ export function CelebrationHost() {
       result={current && currentTag !== dismissed ? current : null}
       viewerId={viewerId}
       stake={duel?.stake}
+      duelName={duel?.name ?? 'Level Fit'}
       onClose={() => {
         if (manual) return hide();
         if (current) {
