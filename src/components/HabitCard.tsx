@@ -94,7 +94,7 @@ export function HabitCard({
               ))}
             </Row>
           </Row>
-          {challenge ? <Txt variant="small">Desafio do dia — vale {CHALLENGE_MULTIPLIER}x pontos!</Txt> : null}
+          {challenge ? <Txt variant="small">Golpe especial do dia — vale {CHALLENGE_MULTIPLIER}x pontos!</Txt> : null}
         </View>
       </Pressable>
     </Animated.View>

@@ -1,4 +1,5 @@
-import { Fredoka_500Medium, Fredoka_600SemiBold, Fredoka_700Bold, useFonts } from '@expo-google-fonts/fredoka';
+import { Bungee_400Regular } from '@expo-google-fonts/bungee';
+import { Rubik_500Medium, Rubik_600SemiBold, Rubik_800ExtraBold, useFonts } from '@expo-google-fonts/rubik';
 import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -47,7 +48,7 @@ function useReminders() {
 export default function RootLayout() {
   const hydrated = useGame((s) => s.hydrated);
   const hasDuel = useGame((s) => !!s.duel);
-  const [fontsLoaded, fontError] = useFonts({ Fredoka_500Medium, Fredoka_600SemiBold, Fredoka_700Bold });
+  const [fontsLoaded, fontError] = useFonts({ Bungee_400Regular, Rubik_500Medium, Rubik_600SemiBold, Rubik_800ExtraBold });
   const ready = hydrated && (fontsLoaded || !!fontError);
 
   useEffect(() => {

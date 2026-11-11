@@ -12,40 +12,40 @@ import Animated, {
 
 import { C, F } from '@/constants/theme';
 
-const KETTU = require('@/assets/brand/kettu.png');
+const BRASA = require('@/assets/brand/brasa.png');
 
-/** Kettu, o mascote: um kettlebell determinado que fica "respirando". */
-export function Kettu({ size = 120, idle = true }: { size?: number; idle?: boolean }) {
+/** Brasa, o mascote: um lutador de fogo que fica "gingando" em guarda. */
+export function Mascot({ size = 120, idle = true }: { size?: number; idle?: boolean }) {
   const t = useSharedValue(0);
   useEffect(() => {
     if (!idle) return;
     t.set(
       withRepeat(
         withSequence(
-          withTiming(1, { duration: 700, easing: Easing.inOut(Easing.quad) }),
-          withTiming(0, { duration: 700, easing: Easing.inOut(Easing.quad) }),
+          withTiming(1, { duration: 450, easing: Easing.inOut(Easing.quad) }),
+          withTiming(0, { duration: 450, easing: Easing.inOut(Easing.quad) }),
         ),
         -1,
       ),
     );
   }, [idle, t]);
   const style = useAnimatedStyle(() => ({
-    transform: [{ translateY: -6 * t.value }, { scaleX: 1 + 0.03 * t.value }, { scaleY: 1 - 0.02 * t.value }],
+    transform: [{ translateY: -5 * t.value }, { rotate: `${-3 + 6 * t.value}deg` }],
   }));
   return (
     <Animated.View style={[{ width: size, height: size }, style]}>
-      <Image source={KETTU} style={{ width: size, height: size }} contentFit="contain" />
+      <Image source={BRASA} style={{ width: size, height: size }} contentFit="contain" />
     </Animated.View>
   );
 }
 
-/** Logotipo: "LEVEL" em tinta + "FIT" em azul aura, com sombra chapada. */
+/** Logotipo de pôster: "LEVEL" em cacau + "FIT" em brasa, com sombra chapada. */
 export function Wordmark({ size = 44 }: { size?: number }) {
   const shadow = { textShadowColor: C.ink, textShadowOffset: { width: 0, height: size / 14 }, textShadowRadius: 0.01 };
   return (
     <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-      <Text style={{ fontFamily: F.display, fontSize: size, color: C.ink, letterSpacing: 1 }}>LEVEL</Text>
-      <Text style={{ fontFamily: F.display, fontSize: size, color: C.primary, letterSpacing: 1, marginLeft: size * 0.18, ...shadow }}>
+      <Text style={{ fontFamily: F.display, fontSize: size, color: C.ink }}>LEVEL</Text>
+      <Text style={{ fontFamily: F.display, fontSize: size, color: C.primary, marginLeft: size * 0.2, ...shadow }}>
         FIT
       </Text>
     </View>

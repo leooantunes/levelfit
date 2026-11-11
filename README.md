@@ -2,7 +2,7 @@
 
 Duelo de hábitos saudáveis entre 2 pessoas. O app sugere metas, cada prova de hábito é uma **foto**, e existe ranking **diário, semanal e mensal** com animação de vitória para o vencedor. O placar também aparece num **widget** na tela inicial (iOS e Android).
 
-Identidade visual em [`docs/brand`](docs/brand/brand-board.png), com o mascote **Kettu**.
+Identidade visual em [`docs/brand`](docs/brand/brand-board.png), com o mascote **Brasa**, um lutador de fogo em guarda.
 
 Feito com **React Native + Expo SDK 58** (Expo Router, Reanimated, `expo-widgets`).
 
@@ -19,7 +19,7 @@ Feito com **React Native + Expo SDK 58** (Expo Router, Reanimated, `expo-widgets
 | 💸 **Aposta** | Ex.: "um açaí". Quem perde a semana ou o mês paga, e a tela de vitória lembra. |
 | 🤨 **Contestar prova** | O rival pode contestar uma foto suspeita. Prova contestada não pontua até ser aceita. |
 | 😂 **Reações** | 🔥 💪 👏 😂 🤨 nas provas do feed. |
-| 🧬 **Níveis e conquistas** | XP = pontos totais, com níveis e títulos (de "Sofá Lover" até "Lenda") e 15 conquistas. |
+| 🧬 **Níveis e conquistas** | XP = pontos totais, com níveis e ranks de lutador (de "Saco de Pancada" até "Lenda do Ringue") e 15 conquistas. |
 | 🔔 **Lembretes** | Notificações locais às 12:30 e num horário escolhido à noite. |
 | 📱 **Widget** | Placar do dia, metas feitas e sequência. iOS: pequeno, médio, grande e tela de bloqueio. Android: 4x2. |
 

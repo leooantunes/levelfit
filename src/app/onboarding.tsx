@@ -3,7 +3,7 @@ import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleShee
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Kettu, Wordmark } from '@/components/Brand';
+import { Mascot, Wordmark } from '@/components/Brand';
 import { GoalPicker } from '@/components/GoalPicker';
 import { Avatar, Button, Card, haptic, ProgressBar, Row, Txt } from '@/components/ui';
 import { AVATARS, C, F, hardShadow, PLAYER_COLORS, R, S, STROKE } from '@/constants/theme';
@@ -112,19 +112,19 @@ export default function Onboarding() {
     // 0 — boas-vindas
     <View key="welcome" style={{ gap: S.xl, alignItems: 'center', paddingTop: S.xxl }}>
       <Animated.View entering={FadeInDown.springify()}>
-        <Kettu size={170} />
+        <Mascot size={170} />
       </Animated.View>
       <Animated.View entering={FadeInDown.delay(150)} style={{ alignItems: 'center', gap: S.sm }}>
-        <Wordmark size={46} />
+        <Wordmark size={40} />
         <Txt variant="h3" style={{ textAlign: 'center' }}>
-          Hábitos saudáveis viram um duelo.
+          Hábitos saudáveis viram uma luta.
         </Txt>
       </Animated.View>
       <Animated.View entering={FadeInDown.delay(300)} style={{ gap: S.md, alignSelf: 'stretch' }}>
         {[
           ['🎯', 'O app sugere metas: água, leitura, dieta, treino e mais.'],
           ['📸', 'Cumpriu? Poste uma foto de prova para pontuar.'],
-          ['🏆', 'Ranking diário, semanal e mensal com festa pro vencedor.'],
+          ['🥊', 'Cada dia é um round: ranking diário, semanal e mensal com festa pro vencedor.'],
           ['🔥', 'Sequências dão combo, dia perfeito dá bônus.'],
           ['📱', 'Acompanhe o placar pelo widget na tela inicial.'],
         ].map(([e, t]) => (
@@ -136,12 +136,12 @@ export default function Onboarding() {
           </Row>
         ))}
       </Animated.View>
-      <Button title="Criar meu jogador" onPress={next} style={{ alignSelf: 'stretch' }} />
+      <Button title="Entrar no ringue" onPress={next} style={{ alignSelf: 'stretch' }} />
     </View>,
 
     // 1 — perfil
     <View key="me" style={{ gap: S.lg }}>
-      <Txt variant="title">Quem é você?</Txt>
+      <Txt variant="title">Quem é o lutador?</Txt>
       <Row style={{ justifyContent: 'center' }}>
         <Avatar emoji={avatar} color={color} size={88} />
       </Row>
@@ -152,7 +152,7 @@ export default function Onboarding() {
 
     // 2 — modo de jogo
     <View key="mode" style={{ gap: S.lg }}>
-      <Txt variant="title">Como vai ser o duelo?</Txt>
+      <Txt variant="title">Como vai ser a luta?</Txt>
       {(
         [
           { id: 'create', emoji: '🌐', title: 'Criar duelo online', desc: 'Cada um no seu celular. Você recebe um código para convidar o rival.', online: true },
@@ -182,7 +182,7 @@ export default function Onboarding() {
 
       {flow === 'local' ? (
         <Animated.View entering={FadeInDown} style={{ gap: S.md }}>
-          <Txt variant="label">Seu rival</Txt>
+          <Txt variant="label">Seu adversário</Txt>
           <Input value={oppName} onChangeText={setOppName} placeholder="Nome do rival" maxLength={16} />
           <AvatarPicker avatar={oppAvatar} color={oppColor} onAvatar={setOppAvatar} onColor={setOppColor} />
         </Animated.View>
@@ -209,7 +209,7 @@ export default function Onboarding() {
 
     // 3 — metas
     <View key="goals" style={{ gap: S.lg }}>
-      <Txt variant="title">Escolha as metas</Txt>
+      <Txt variant="title">Regras da luta</Txt>
       <Txt variant="dim">Sugerimos um pacote equilibrado — ajuste do seu jeito. Todo dia também aparece um ⚡ desafio bônus valendo 2x.</Txt>
       <GoalPicker selected={habitIds} onChange={setHabitIds} />
       <Button title="Continuar" onPress={next} disabled={habitIds.length === 0} />
@@ -234,7 +234,7 @@ export default function Onboarding() {
         <Txt variant="label">Como pontua</Txt>
         <Txt variant="dim">• Cada prova vale os pontos da meta{'\n'}• Dia perfeito (todas as metas): +30{'\n'}• Combo: 3 dias seguidos x1.1, 7 dias x1.25, 14 dias x1.5{'\n'}• Prova contestada pelo rival não pontua</Txt>
       </Card>
-      <Button title="Começar o duelo! ⚔️" onPress={finish} loading={busy} />
+      <Button title="Soar o gongo! 🔔" onPress={finish} loading={busy} />
     </View>,
   ];
 

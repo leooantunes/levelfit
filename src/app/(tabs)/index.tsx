@@ -6,7 +6,7 @@ import { HabitCard } from '@/components/HabitCard';
 import { Avatar, Card, Chip, haptic, ProgressBar, Row, Screen, Txt } from '@/components/ui';
 import { VersusBar } from '@/components/VersusBar';
 import { C, R, S } from '@/constants/theme';
-import { addDays, periodLabel } from '@/domain/dates';
+import { addDays, daysBetween, periodLabel, toDateKey } from '@/domain/dates';
 import { dailyChallenge, getHabit } from '@/domain/habits';
 import { PERFECT_DAY_BONUS, streakMultiplier } from '@/domain/scoring';
 import { usePlayers, useScoreBook, useToday } from '@/hooks/useScoreBook';
@@ -55,9 +55,10 @@ export default function TodayScreen() {
       <Row style={{ justifyContent: 'space-between' }}>
         <View>
           <Txt variant="label" color={C.primaryDark}>
-            ⚡ Level Fit · {duel.name}
+            🥊 Level Fit · {duel.name}
           </Txt>
-          <Txt variant="title">{periodLabel('day', today, today)}</Txt>
+          <Txt variant="title">Round {daysBetween(toDateKey(new Date(duel.createdAt)), today) + 1}</Txt>
+          <Txt variant="dim">{periodLabel('day', today, today)}</Txt>
         </View>
         {mode === 'online' ? (
           <Chip
@@ -70,7 +71,7 @@ export default function TodayScreen() {
 
       {mode === 'local' && duel.players.length > 1 ? (
         <Card style={{ paddingVertical: S.md }}>
-          <Txt variant="label">Quem está com o celular?</Txt>
+          <Txt variant="label">Quem está no ringue?</Txt>
           <Row gap={S.md}>
             {duel.players.map((p) => {
               const active = p.id === me.id;
@@ -126,7 +127,7 @@ export default function TodayScreen() {
 
       <View style={{ gap: S.md }}>
         <Row style={{ justifyContent: 'space-between' }}>
-          <Txt variant="h2">Suas metas</Txt>
+          <Txt variant="h2">Seus golpes de hoje</Txt>
           <Pressable onPress={() => router.push('/goals')} hitSlop={10}>
             <Txt variant="h3" color={C.primaryDark}>
               Editar
@@ -147,7 +148,7 @@ export default function TodayScreen() {
       </View>
 
       <View style={{ gap: S.md }}>
-        <Txt variant="h2">⚡ Desafio do dia</Txt>
+        <Txt variant="h2">⚡ Golpe especial</Txt>
         <HabitCard
           habit={challenge}
           me={me}

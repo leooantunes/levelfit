@@ -7,11 +7,11 @@ import type { DuelWidgetProps } from './types';
 const DuelWidget = (props: DuelWidgetProps, environment: WidgetEnvironment) => {
   'widget';
   // Tudo precisa estar declarado aqui dentro: o widget roda em um runtime isolado.
-  const BG = '#1E2A44';
-  const GREEN = '#7FD07F';
-  const BLUE = '#6CB8EA';
-  const PINK = '#F48FB1';
-  const DIM = '#B8C2DE';
+  const BG = '#2B1B17';
+  const GREEN = '#F7B928';
+  const BLUE = '#FF6A4D';
+  const PINK = '#5AA9F0';
+  const DIM = '#CBB3A6';
   const progress = props.total > 0 ? props.done / props.total : 0;
   const family = environment.widgetFamily;
 
@@ -64,7 +64,7 @@ const DuelWidget = (props: DuelWidgetProps, environment: WidgetEnvironment) => {
   return (
     <VStack alignment="leading" spacing={8} modifiers={[containerBackground(BG, 'widget'), widgetURL('levelfit://')]}>
       <HStack>
-        <Text modifiers={[font({ weight: 'heavy', size: 13, design: 'rounded' }), foregroundStyle(GREEN)]}>⚡ LEVEL FIT</Text>
+        <Text modifiers={[font({ weight: 'heavy', size: 13, design: 'rounded' }), foregroundStyle(GREEN)]}>🥊 LEVEL FIT</Text>
         <Spacer />
         <Text modifiers={[font({ size: 12 }), foregroundStyle(DIM)]}>{`🔥 ${props.streak} dias`}</Text>
       </HStack>

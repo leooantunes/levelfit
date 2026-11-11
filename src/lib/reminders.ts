@@ -38,7 +38,7 @@ export async function syncReminders(enabled: boolean, hour: number, minute: numb
   });
   await Notifications.scheduleNotificationAsync({
     identifier: IDS[1],
-    content: { title: '🔥 Última chamada!', body: 'Poste as provas que faltam antes da meia-noite e não perca o dia!' },
+    content: { title: '🥊 O gongo vai soar!', body: 'Poste as provas que faltam antes da meia-noite e não entregue o round!' },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour, minute, channelId: 'reminders' },
   });
 }

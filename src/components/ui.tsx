@@ -120,7 +120,7 @@ export function Button({
 
 export function ProgressBar({
   value,
-  color = C.leaf,
+  color = C.primary,
   height = 14,
   track = C.surface2,
 }: {
@@ -205,14 +205,14 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
   // Na web as abas ficam no topo; no celular ficam embaixo.
   content: { padding: S.lg, paddingTop: Platform.OS === 'web' ? 72 : S.lg, paddingBottom: 120, gap: S.lg },
-  title: { color: C.ink, fontSize: 32, fontFamily: F.display, letterSpacing: -0.3 },
-  h2: { color: C.ink, fontSize: 22, fontFamily: F.display },
+  title: { color: C.ink, fontSize: 28, fontFamily: F.display, lineHeight: 34 },
+  h2: { color: C.ink, fontSize: 21, fontFamily: F.heavy },
   h3: { color: C.ink, fontSize: 17, fontFamily: F.semibold },
-  body: { color: C.text, fontSize: 15, lineHeight: 21 },
-  dim: { color: C.textDim, fontSize: 14, lineHeight: 20 },
-  small: { color: C.textMuted, fontSize: 12 },
-  label: { color: C.textDim, fontSize: 12, fontFamily: F.semibold, letterSpacing: 1.2, textTransform: 'uppercase' },
-  number: { color: C.ink, fontSize: 30, fontFamily: F.display, fontVariant: ['tabular-nums'] },
+  body: { color: C.text, fontSize: 15, lineHeight: 21, fontFamily: F.medium },
+  dim: { color: C.textDim, fontSize: 14, lineHeight: 20, fontFamily: F.medium },
+  small: { color: C.textMuted, fontSize: 12, fontFamily: F.medium },
+  label: { color: C.textDim, fontSize: 12, fontFamily: F.heavy, letterSpacing: 1.4, textTransform: 'uppercase' },
+  number: { color: C.ink, fontSize: 28, fontFamily: F.display, fontVariant: ['tabular-nums'] },
   card: {
     backgroundColor: C.surface,
     borderRadius: R.lg,
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     borderColor: C.ink,
     boxShadow: hardShadow(4),
   },
-  buttonText: { fontSize: 17, fontFamily: F.display, letterSpacing: 0.3 },
+  buttonText: { fontSize: 16, fontFamily: F.heavy, letterSpacing: 0.8, textTransform: 'uppercase' },
   segmented: {
     flexDirection: 'row',
     backgroundColor: C.surface,
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     boxShadow: hardShadow(3),
   },
   segment: { flex: 1, paddingVertical: 9, borderRadius: R.pill, alignItems: 'center' },
-  segmentActive: { backgroundColor: C.primary, borderWidth: 2, borderColor: C.ink },
+  segmentActive: { backgroundColor: C.ink, borderWidth: 2, borderColor: C.ink },
   segmentText: { color: C.textDim, fontFamily: F.semibold, fontSize: 15 },
   chip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: R.pill, alignSelf: 'flex-start', borderWidth: 1.5, borderColor: C.ink },
   chipText: { fontSize: 12, fontFamily: F.semibold },

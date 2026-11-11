@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
-import { C, R, S } from '@/constants/theme';
+import { C, F, R, S } from '@/constants/theme';
 import type { Player } from '@/domain/types';
 
 import { Avatar, Txt } from './ui';
@@ -45,9 +45,9 @@ export function VersusBar({
             </Txt>
           </View>
         </View>
-        <Txt variant="label" style={{ color: C.textMuted }}>
-          VS
-        </Txt>
+        <View style={styles.vs}>
+          <Txt style={styles.vsText}>VS</Txt>
+        </View>
         <View style={[styles.side, { justifyContent: 'flex-end' }]}>
           <View style={{ alignItems: 'flex-end' }}>
             <Txt variant="h3" numberOfLines={1}>
@@ -79,4 +79,15 @@ const styles = StyleSheet.create({
   side: { flexDirection: 'row', alignItems: 'center', gap: S.sm, flex: 1 },
   bar: { flexDirection: 'row', height: 18, borderRadius: R.pill, overflow: 'hidden', backgroundColor: C.surface2, borderWidth: 2.5, borderColor: C.ink },
   divider: { width: 3, backgroundColor: C.ink },
+  vs: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: C.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+    transform: [{ rotate: '-8deg' }],
+    boxShadow: `0px 3px 0px ${C.primary}`,
+  },
+  vsText: { color: C.gold, fontFamily: F.display, fontSize: 16 },
 });

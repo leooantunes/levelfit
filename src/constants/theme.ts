@@ -1,48 +1,55 @@
 /**
- * Identidade visual Level Fit — "Sticker Arena".
- * Traço de anime: contorno grosso em tinta azul-marinho, sombra chapada,
- * formas arredondadas e cores vivas. Mascote: Kettu (assets/brand/kettu.svg).
+ * Identidade visual Level Fit — "Pôster de Luta".
+ * Cada dia é um round: contorno grosso cor de cacau, sombra chapada, laranja brasa,
+ * dourado de cinturão e os cantos vermelho x azul do ringue.
+ * Mascote: Brasa (assets/brand/brasa.svg).
  */
 export const C = {
   // Base
-  bg: '#FFF7E6', // creme papel
+  bg: '#FFF3E3', // papel de pôster
   surface: '#FFFFFF',
-  surface2: '#EEF2FB', // névoa periwinkle
-  ink: '#1E2A44', // contorno / texto principal
-  border: '#1E2A44',
-  hairline: '#D9DFEE',
-  text: '#1E2A44',
-  textDim: '#56627F',
-  textMuted: '#8C95AD',
+  surface2: '#FBE6D2', // lona do ringue
+  ink: '#2B1B17', // cacau — contorno e texto
+  border: '#2B1B17',
+  hairline: '#EED6C1',
+  text: '#2B1B17',
+  textDim: '#6E544B',
+  textMuted: '#A68C80',
 
   // Marca
-  primary: '#3E9BDB', // azul aura
-  primaryDark: '#2B7DBA',
-  periwinkle: '#8EA6DE', // corpo do Kettu
-  periwinkleDark: '#6F88C4',
-  leaf: '#5DBB63', // broto — sucesso / meta feita
-  leafDark: '#3E8E47',
-  cream: '#F5E6B8', // barriga do Kettu
-  pink: '#F48FB1', // bochechas
-  gold: '#F5C84C', // troféus
-  accent: '#7B6FD6', // XP / níveis
-  danger: '#E5484D',
-  warning: '#F59E42',
+  primary: '#F26B1D', // brasa — ação principal
+  primaryDark: '#C9481A',
+  gold: '#F7B928', // cinturão — vitórias
+  leaf: '#3FAE5A', // meta cumprida
+  leafDark: '#2E8A45',
+  accent: '#D6453B', // XP, combo
+  redCorner: '#E2412F',
+  blueCorner: '#2F7DD1',
+  smoke: '#8A8285',
+  danger: '#C62F2F',
+  warning: '#F7B928',
   onColor: '#FFFFFF',
+
+  // Noite de luta (telas de comemoração)
+  night: '#1E1210',
+  nightText: '#FFE9D6',
 } as const;
 
-export const PLAYER_COLORS = ['#3E9BDB', '#F48FB1', '#5DBB63', '#F59E42', '#7B6FD6', '#E5484D'];
+/** Canto vermelho x canto azul + extras. */
+export const PLAYER_COLORS = ['#E2412F', '#2F7DD1', '#F26B1D', '#3FAE5A', '#8E44AD', '#F7B928'];
 export const AVATARS = ['🦁', '🐯', '🦊', '🐺', '🐼', '🐸', '🦄', '🐙', '🦖', '🐵', '🦅', '🐻'];
 
 export const S = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
-export const R = { sm: 12, md: 18, lg: 24, pill: 999 } as const;
+export const R = { sm: 10, md: 16, lg: 22, pill: 999 } as const;
 
-/** Espessura do contorno e sombra chapada (estilo adesivo). */
+/** Espessura do contorno e sombra chapada (estilo pôster). */
 export const STROKE = 2.5;
 export const hardShadow = (y = 4, color: string = C.ink) => `0px ${y}px 0px ${color}`;
 
 export const F = {
-  display: 'Fredoka_700Bold',
-  semibold: 'Fredoka_600SemiBold',
-  medium: 'Fredoka_500Medium',
+  /** Display de pôster de luta: logo, títulos, placares. */
+  display: 'Bungee_400Regular',
+  heavy: 'Rubik_800ExtraBold',
+  semibold: 'Rubik_600SemiBold',
+  medium: 'Rubik_500Medium',
 };

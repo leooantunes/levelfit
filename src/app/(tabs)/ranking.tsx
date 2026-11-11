@@ -15,7 +15,7 @@ const PERIODS: { value: Period; label: string }[] = [
   { value: 'week', label: 'Semanal' },
   { value: 'month', label: 'Mensal' },
 ];
-const TROPHY = { day: '🥇', week: '🏆', month: '👑' } as const;
+const TROPHY = { day: '🥊', week: '🏆', month: '👑' } as const;
 
 function Podium({ result }: { result: PeriodResult }) {
   const [first, second] = result.standings;

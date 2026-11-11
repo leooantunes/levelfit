@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import Animated, { BounceIn, FadeIn, FadeOut, ZoomIn } from 'react-native-reanimated';
+import Animated, { BounceIn, FadeIn, ZoomIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Confetti } from '@/components/Confetti';
@@ -166,14 +166,14 @@ export default function CheckinScreen() {
       </KeyboardAvoidingView>
 
       {success ? (
-        <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.success} pointerEvents="none">
+        <Animated.View entering={FadeIn} style={styles.success} pointerEvents="none">
           <Confetti count={40} />
           <Animated.View entering={ZoomIn.springify()} style={{ alignItems: 'center', gap: S.sm }}>
             <Txt style={{ fontSize: 80 }}>{habit.emoji}</Txt>
-            <Txt variant="title" color={C.leafDark} style={{ fontSize: 48 }}>
+            <Txt variant="title" color={C.primary} style={{ fontSize: 44, lineHeight: 54 }}>
               +{pts} pts!
             </Txt>
-            <Txt variant="h3">Prova registrada 💪</Txt>
+            <Txt variant="h3">Golpe certeiro! Prova registrada 🥊</Txt>
           </Animated.View>
         </Animated.View>
       ) : null}
@@ -196,5 +196,5 @@ const styles = StyleSheet.create({
     borderColor: C.ink,
   },
   thumb: { width: 48, height: 48, borderRadius: R.sm },
-  success: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(255,247,230,0.96)', alignItems: 'center', justifyContent: 'center' },
+  success: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(255,243,227,0.97)', alignItems: 'center', justifyContent: 'center' },
 });
