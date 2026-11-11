@@ -8,6 +8,7 @@ import { AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { C } from '@/constants/theme';
+import { forgetPurchaser, identifyPurchaser } from '@/lib/premium';
 import { syncReminders } from '@/lib/reminders';
 import { useGame } from '@/store/useGame';
 import { api } from '@/sync/supabase';
@@ -31,6 +32,15 @@ function useSession() {
   }, [hydrated, restoreSession]);
 
   useEffect(() => api.onSignedOut(() => useGame.getState().account && signOut()), [signOut]);
+}
+
+/** A conta da loja (RevenueCat) segue a conta do app: o appUserID é o id do usuário. */
+function usePurchaser() {
+  const accountId = useGame((s) => s.account?.id);
+  useEffect(() => {
+    if (accountId) identifyPurchaser(accountId);
+    else forgetPurchaser();
+  }, [accountId]);
 }
 
 /** Mantém todos os duelos sincronizados: ao abrir, ao voltar pro app e em tempo real. */
@@ -73,6 +83,7 @@ export default function RootLayout() {
   }, [ready]);
 
   useSession();
+  usePurchaser();
   useOnlineSync();
   useReminders();
   useWidgetSync();
@@ -89,6 +100,7 @@ export default function RootLayout() {
             <Stack.Screen name="new-duel" options={{ presentation: 'modal' }} />
             <Stack.Screen name="join" options={{ presentation: 'modal' }} />
             <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="premium" options={{ presentation: 'modal' }} />
             {/* Estas telas usam o duelo aberto; sem ele, voltam para a lista. */}
             <Stack.Screen name="duel" />
             <Stack.Screen name="checkin/[habitId]" options={{ presentation: 'modal' }} />
@@ -98,6 +110,8 @@ export default function RootLayout() {
           <Stack.Protected guard={!signedIn}>
             <Stack.Screen name="auth" />
           </Stack.Protected>
+          {/* Aberta com ou sem conta (link no cadastro e em Minha conta). */}
+          <Stack.Screen name="privacy" options={{ presentation: 'modal' }} />
         </Stack>
       </ThemeProvider>
     </GestureHandlerRootView>

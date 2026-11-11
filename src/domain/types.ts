@@ -21,6 +21,17 @@ export type Player = {
   color: string;
 };
 
+/** Medidas lidas do Apple Health / Health Connect. Valores em passos ou minutos. */
+export type HealthMetric = 'steps' | 'exercise' | 'sleep' | 'mindful' | 'daylight';
+
+export type HealthProof = {
+  metric: HealthMetric;
+  /** Passos (steps) ou minutos (demais). */
+  value: number;
+  /** 'Apple Health' ou 'Health Connect'. */
+  source: string;
+};
+
 export type Checkin = {
   id: string;
   duelId: string;
@@ -29,8 +40,10 @@ export type Checkin = {
   /** Dia local no formato YYYY-MM-DD. */
   dateKey: string;
   createdAt: string;
-  /** URI local (file://) ou URL remota da foto de prova. */
+  /** URI local (file://) ou URL remota da foto de prova. Vazio em provas do relógio. */
   photoUri: string;
+  /** Prova automática vinda do relógio (Apple Health / Health Connect), sem foto. */
+  health?: HealthProof;
   note?: string;
   /** Reações dos jogadores: playerId -> emoji. */
   reactions: Record<string, string>;

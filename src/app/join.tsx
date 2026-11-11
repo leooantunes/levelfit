@@ -7,6 +7,7 @@ import { Input } from '@/components/ProfileFields';
 import { Button, haptic, Txt } from '@/components/ui';
 import { C, S } from '@/constants/theme';
 import { useGame } from '@/store/useGame';
+import { PremiumRequiredError } from '@/sync/supabase';
 
 export default function JoinScreen() {
   const joinDuel = useGame((s) => s.joinDuel);
@@ -22,7 +23,8 @@ export default function JoinScreen() {
       openDuel(id);
       router.replace('/duel');
     } catch (e) {
-      Alert.alert('Não deu certo', e instanceof Error ? e.message : String(e));
+      if (e instanceof PremiumRequiredError) router.replace('/premium');
+      else Alert.alert('Não deu certo', e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }

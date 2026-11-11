@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -7,6 +6,7 @@ import { C, hardShadow, R, S, STROKE } from '@/constants/theme';
 import { CHALLENGE_MULTIPLIER } from '@/domain/habits';
 import type { Checkin, Habit, Player } from '@/domain/types';
 
+import { ProofThumb } from './HealthProof';
 import { Chip, haptic, Row, Txt } from './ui';
 
 function Dots({ count, max, color }: { count: number; max: number; color: string }) {
@@ -90,7 +90,7 @@ export function HabitCard({
             </Row>
             <Row gap={-8}>
               {thumbs.map((c) => (
-                <Image key={c.id} source={{ uri: c.photoUri }} style={styles.thumb} contentFit="cover" />
+                <ProofThumb key={c.id} checkin={c} style={styles.thumb} />
               ))}
             </Row>
           </Row>

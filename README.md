@@ -111,3 +111,22 @@ supabase/schema.sql    banco, RLS, funções e storage
 - O placar é sempre **recalculado a partir dos check-ins**, então os dois aparelhos chegam ao mesmo resultado. Por isso, mudar as metas recalcula também os dias anteriores.
 - As fotos ficam num bucket privado e são exibidas com URLs assinadas (7 dias). Suas próprias fotos também ficam salvas no aparelho.
 - Check-ins feitos sem internet ficam na fila e sobem no próximo sync. Para forçar, puxe a tela para baixo.
+- **Excluir conta** (Minha conta → Excluir minha conta) chama a Edge Function [`delete-account`](supabase/functions/delete-account/index.ts), que apaga as fotos, os duelos em que a pessoa joga sozinha e o usuário. Exigência da App Store (5.1.1(v)).
+- **Denúncias** (tela da prova → Denunciar) vão para a tabela `reports`, que só a equipe vê pelo painel do Supabase. A Apple espera que denúncias sejam analisadas em até 24 h: confira a tabela e marque `status = 'resolvida'`.
+- **Bloquear** (aba Perfil do duelo → Bloquear, ou depois de denunciar uma prova) chama a RPC `block_player`: guarda o bloqueio na tabela `blocks`, apaga as provas de quem bloqueou naquele duelo e tira a pessoa dele. `join_duel` recusa juntar duas pessoas que se bloquearam. A lista e o desbloqueio ficam em Minha conta.
+- **Relógio** (Minha conta → ⌚ Relógio): lê o Apple Health (iOS, [`health.ios.ts`](src/lib/health.ios.ts)) ou o Health Connect (Android, [`health.android.ts`](src/lib/health.android.ts)). Ao abrir o app, confere hoje e ontem; meta batida vira prova automática sem foto (coluna `health`), uma por duelo/meta/dia (id determinístico), e o rival pode contestar. Metas e alvos em [`healthGoals.ts`](src/domain/healthGoals.ts): 10 mil passos, 30 min de treino, 7h de sono, 10 min de meditação e 20 min ao ar livre (só Apple Watch). Dados digitados à mão no app de saúde não contam. Precisa de build nativo novo (não roda no Expo Go). Na Play Store, os dados de saúde exigem a declaração de Health Connect no Play Console.
+- **Privacidade e suporte:** a política está em [`src/lib/privacyPolicy.ts`](src/lib/privacyPolicy.ts) (tela `/privacy`) e em [`docs/privacy-policy.md`](docs/privacy-policy.md) para publicar numa URL pública. Com `EXPO_PUBLIC_PRIVACY_POLICY_URL` definida, os links abrem a página publicada; sem ela, abrem a tela do app. `EXPO_PUBLIC_SUPPORT_EMAIL` mostra o contato em Minha conta e na política.
+
+## Premium (R$ 19,90/mês)
+
+Grátis: **1 duelo por vez** (criado ou entrado com código). Premium: duelos ilimitados. A regra vale no banco (`create_duel`/`join_duel`), não só na tela.
+
+Como a cobrança é dentro do app, Apple e Google exigem as compras da própria loja. O app usa o [RevenueCat](https://www.revenuecat.com) (`react-native-purchases`), e o servidor confere a assinatura com a função [`premium-sync`](supabase/functions/premium-sync/index.ts).
+
+Para ativar:
+
+1. **Lojas:** crie a assinatura mensal de R$ 19,90 no App Store Connect (grupo de assinaturas) e no Google Play Console (mesmo ID de produto, ex.: `levelfit_premium_monthly`).
+2. **RevenueCat:** crie o projeto com os apps iOS e Android, importe o produto, crie o entitlement **`premium`** e uma offering padrão com o pacote **mensal**.
+3. **App:** coloque as chaves públicas do SDK em `EXPO_PUBLIC_REVENUECAT_IOS_KEY` e `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` (no `.env` e no `eas env`) e gere um novo build.
+4. **Supabase → Edge Functions → Secrets:** `REVENUECAT_SECRET_API_KEY` (chave secreta do RevenueCat) e `REVENUECAT_WEBHOOK_AUTH` (um valor aleatório longo).
+5. **RevenueCat → Integrations → Webhooks:** URL `https://<projeto>.supabase.co/functions/v1/premium-sync` e o header Authorization com o mesmo valor de `REVENUECAT_WEBHOOK_AUTH`.

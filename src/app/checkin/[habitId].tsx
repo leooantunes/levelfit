@@ -6,11 +6,14 @@ import Animated, { BounceIn, FadeIn, ZoomIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Confetti } from '@/components/Confetti';
+import { ProofThumb } from '@/components/HealthProof';
 import { Button, Card, Chip, haptic, Row, Txt } from '@/components/ui';
 import { C, R, S } from '@/constants/theme';
 import { formatTime } from '@/domain/dates';
 import { CHALLENGE_MULTIPLIER, dailyChallenge, getHabit } from '@/domain/habits';
+import { formatHealthValue, HEALTH_GOALS } from '@/domain/healthGoals';
 import { usePlayers, useToday } from '@/hooks/useScoreBook';
+import { HEALTH_SOURCE, SUPPORTED_METRICS } from '@/lib/health';
 import { pickProofPhoto, takeProofPhoto } from '@/lib/photos';
 import { useActiveCheckins, useActiveDuel, useGame } from '@/store/useGame';
 
@@ -26,8 +29,25 @@ export default function CheckinScreen() {
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const healthEnabled = useGame((s) => s.healthEnabled);
+  const enableHealth = useGame((s) => s.enableHealth);
+  const [connecting, setConnecting] = useState(false);
 
   if (!habit || !duel || !me) return null;
+
+  const goal = HEALTH_GOALS[habit.id];
+  const healthGoal = HEALTH_SOURCE && goal && SUPPORTED_METRICS.includes(goal.metric) ? goal : null;
+
+  const connect = async () => {
+    setConnecting(true);
+    try {
+      const ok = await enableHealth();
+      if (ok) haptic('success');
+      else Alert.alert('Relógio', `Não foi possível conectar ao ${HEALTH_SOURCE}. Confira as permissões e tente de novo.`);
+    } finally {
+      setConnecting(false);
+    }
+  };
 
   const isChallenge = !duel.habitIds.includes(habit.id) && dailyChallenge(duel.id, today, duel.habitIds).id === habit.id;
   const pts = habit.points * (isChallenge ? CHALLENGE_MULTIPLIER : 1);
@@ -100,6 +120,25 @@ export default function CheckinScreen() {
             </Card>
           ) : (
             <>
+              {healthGoal ? (
+                <Card style={{ backgroundColor: C.leaf + '18' }}>
+                  <Txt variant="label">⌚ Pelo relógio</Txt>
+                  {healthEnabled ? (
+                    <Txt variant="dim">
+                      Bateu {formatHealthValue({ metric: healthGoal.metric, value: healthGoal.target })} no {HEALTH_SOURCE}? A prova entra
+                      sozinha quando você abrir o app. Ou mande uma foto agora.
+                    </Txt>
+                  ) : (
+                    <>
+                      <Txt variant="dim">
+                        Conecte o {HEALTH_SOURCE} e esta meta conta sozinha quando seu relógio registrar{' '}
+                        {formatHealthValue({ metric: healthGoal.metric, value: healthGoal.target })}.
+                      </Txt>
+                      <Button title="Conectar relógio" icon="⌚" variant="secondary" loading={connecting} onPress={connect} />
+                    </>
+                  )}
+                </Card>
+              ) : null}
               <Card>
                 <Txt variant="label">📸 Foto de prova</Txt>
                 <Txt variant="dim">{habit.proofHint}</Txt>
@@ -147,7 +186,7 @@ export default function CheckinScreen() {
                 return (
                   <Pressable key={c.id} onPress={() => router.push({ pathname: '/proof/[id]', params: { id: c.id } })}>
                     <Row>
-                      <Image source={{ uri: c.photoUri, cacheKey: c.id }}style={styles.thumb} contentFit="cover" />
+                      <ProofThumb checkin={c} style={styles.thumb} />
                       <View style={{ flex: 1 }}>
                         <Txt variant="h3">
                           {who?.avatar} {who?.name}

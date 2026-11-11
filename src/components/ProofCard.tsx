@@ -7,6 +7,7 @@ import { formatTime } from '@/domain/dates';
 import { getHabit } from '@/domain/habits';
 import type { Checkin, Player } from '@/domain/types';
 
+import { HealthProofView } from './HealthProof';
 import { Avatar, Chip, haptic, Row, Txt } from './ui';
 
 export const REACTIONS = ['🔥', '💪', '👏', '😂', '🤨'];
@@ -70,6 +71,9 @@ export function ProofCard({
         {checkin.disputed ? <Chip label="⚠️ Contestada" color={C.danger + '33'} textColor={C.danger} /> : null}
       </Row>
       <Pressable onPress={() => router.push({ pathname: '/proof/[id]', params: { id: checkin.id } })}>
+        {checkin.health ? (
+          <HealthProofView proof={checkin.health} dim={checkin.disputed} />
+        ) : (
         <Image
           // A URL assinada muda a cada sincronização; a foto de uma prova nunca muda.
           source={{ uri: checkin.photoUri, cacheKey: checkin.id }}
@@ -77,6 +81,7 @@ export function ProofCard({
           contentFit="cover"
           transition={200}
         />
+        )}
       </Pressable>
       {checkin.note ? <Txt variant="body">{checkin.note}</Txt> : null}
       <ReactionBar checkin={checkin} viewerId={viewerId} onReact={onReact} />

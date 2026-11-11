@@ -3,7 +3,7 @@ import { createClient, type SupabaseClient, type User } from '@supabase/supabase
 import { File } from 'expo-file-system';
 import { AppState, Platform } from 'react-native';
 
-import type { Checkin, Duel, Player } from '@/domain/types';
+import type { Checkin, Duel, HealthProof, Player } from '@/domain/types';
 
 const URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const KEY = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -17,6 +17,29 @@ export type Profile = Omit<Player, 'id'>;
 export type Account = Profile & { id: string; email: string };
 export type CreateDuelInput = { name: string; habitIds: string[]; stake?: string; me: Profile };
 export type Snapshot = { duel: Duel; checkins: Checkin[] };
+export type ReportReason = 'ofensiva' | 'nudez' | 'spam' | 'outro';
+export type BlockedPlayer = { id: string; name: string; avatar: string };
+export type Plan = { premium: boolean; premiumUntil: string | null; isLifetime: boolean };
+
+export const FREE_PLAN: Plan = { premium: false, premiumUntil: null, isLifetime: false };
+
+function toPlan(row: { premium_until: string | null; is_lifetime: boolean } | null): Plan {
+  if (!row) return FREE_PLAN;
+  const active = row.is_lifetime || (!!row.premium_until && new Date(row.premium_until).getTime() > Date.now());
+  return { premium: active, premiumUntil: row.premium_until, isLifetime: row.is_lifetime };
+}
+
+/** O banco recusou por limite do plano grátis (create_duel/join_duel). */
+export class PremiumRequiredError extends Error {
+  constructor() {
+    super('O plano grátis permite 1 duelo por vez. Assine o Premium para ter mais.');
+    this.name = 'PremiumRequiredError';
+  }
+}
+
+function duelError(error: { message: string }): Error {
+  return error.message.startsWith('premium_required') ? new PremiumRequiredError() : new Error(error.message);
+}
 
 let client: SupabaseClient | null = null;
 function supabase(): SupabaseClient {
@@ -82,7 +105,8 @@ type CheckinRow = {
   habit_id: string;
   date_key: string;
   created_at: string;
-  photo_path: string;
+  photo_path: string | null;
+  health: HealthProof | null;
   note: string | null;
   reactions: Record<string, string> | null;
   disputed: boolean;
@@ -139,6 +163,28 @@ export const api = {
     await supabase().auth.signOut();
   },
 
+  /** Exclui a conta e os dados da pessoa no servidor (função delete-account). */
+  async deleteAccount() {
+    const sb = supabase();
+    await requireUserId();
+    const { error } = await sb.functions.invoke('delete-account', { method: 'POST' });
+    if (error) throw new Error('Não foi possível excluir a conta agora. Verifique a internet e tente de novo.');
+    // O usuário não existe mais no servidor: só limpa a sessão deste aparelho.
+    await sb.auth.signOut({ scope: 'local' }).catch(() => {});
+  },
+
+  /** Denuncia a prova de outro jogador para a equipe do Level Fit analisar. */
+  async reportProof(c: Checkin, reason: ReportReason, details?: string) {
+    const { error } = await supabase().from('reports').insert({
+      checkin_id: c.id,
+      duel_id: c.duelId,
+      reported_player_id: c.playerId,
+      reason,
+      details: details?.trim() || null,
+    });
+    if (error) throw new Error('Não foi possível enviar a denúncia agora. Tente de novo.');
+  },
+
   async resetPassword(email: string) {
     const { error } = await supabase().auth.resetPasswordForEmail(email.trim().toLowerCase());
     if (error) throw authError(error);
@@ -152,6 +198,29 @@ export const api = {
     const { error: e2 } = await sb.from('duel_players').update(profile).eq('player_id', data.user.id);
     if (e2) throw e2;
     return toAccount(data.user);
+  },
+
+  // ---------- Plano ----------
+  /** Plano atual lido do banco (quem grava é a função premium-sync, nunca o app). */
+  async getPlan(): Promise<Plan> {
+    const uid = await requireUserId();
+    const { data, error } = await supabase()
+      .from('entitlements')
+      .select('premium_until, is_lifetime')
+      .eq('user_id', uid)
+      .maybeSingle<{ premium_until: string | null; is_lifetime: boolean }>();
+    if (error) throw error;
+    return toPlan(data);
+  },
+
+  /** Pede ao servidor para conferir a assinatura no RevenueCat (depois de comprar/restaurar). */
+  async syncPlan(): Promise<Plan> {
+    await requireUserId();
+    const { data, error } = await supabase().functions.invoke<{ premiumUntil: string | null; isLifetime: boolean }>('premium-sync', {
+      method: 'POST',
+    });
+    if (error || !data) throw new Error('Não foi possível confirmar a assinatura agora. Tente "Restaurar compras" em instantes.');
+    return toPlan({ premium_until: data.premiumUntil, is_lifetime: data.isLifetime });
   },
 
   // ---------- Duelos ----------
@@ -172,7 +241,7 @@ export const api = {
       p_avatar: input.me.avatar,
       p_color: input.me.color,
     });
-    if (error) throw new Error(error.message);
+    if (error) throw duelError(error);
     return loadDuel((data as DuelRow).id);
   },
 
@@ -184,7 +253,7 @@ export const api = {
       p_avatar: me.avatar,
       p_color: me.color,
     });
-    if (error) throw new Error(error.message);
+    if (error) throw duelError(error);
     return loadDuel((data as DuelRow).id);
   },
 
@@ -192,6 +261,43 @@ export const api = {
     const uid = await requireUserId();
     const { error } = await supabase().from('duel_players').delete().eq('duel_id', duelId).eq('player_id', uid);
     if (error) throw error;
+  },
+
+  /**
+   * Bloqueia o rival do duelo: o servidor guarda o bloqueio, apaga as suas provas
+   * desse duelo e tira você dele. Depois apaga as suas fotos do armazenamento.
+   */
+  async blockRival(duelId: string, myCheckinIds: string[]) {
+    const sb = supabase();
+    await requireUserId();
+    const { error } = await sb.rpc('block_player', { p_duel: duelId });
+    if (error) {
+      throw new Error(
+        error.code === 'PGRST202' ? 'Bloqueio indisponível no momento. Tente de novo mais tarde.' : error.message,
+      );
+    }
+    if (myCheckinIds.length) {
+      await sb.storage
+        .from(BUCKET)
+        .remove(myCheckinIds.map((id) => `${duelId}/${id}.jpg`))
+        .catch(() => {});
+    }
+  },
+
+  async listBlocked(): Promise<BlockedPlayer[]> {
+    const { data, error } = await supabase()
+      .from('blocks')
+      .select('blocked_id, blocked_name, blocked_avatar, created_at')
+      .order('created_at', { ascending: false })
+      .returns<{ blocked_id: string; blocked_name: string; blocked_avatar: string; created_at: string }[]>();
+    if (error) throw new Error('Não foi possível carregar a lista de bloqueados.');
+    return (data ?? []).map((r) => ({ id: r.blocked_id, name: r.blocked_name || 'Jogador', avatar: r.blocked_avatar }));
+  },
+
+  async unblock(playerId: string) {
+    const uid = await requireUserId();
+    const { error } = await supabase().from('blocks').delete().eq('blocker_id', uid).eq('blocked_id', playerId);
+    if (error) throw new Error('Não foi possível desbloquear agora. Tente de novo.');
   },
 
   async updateDuel(duelId: string, patch: Partial<Pick<Duel, 'habitIds' | 'stake' | 'name'>>) {
@@ -214,7 +320,7 @@ export const api = {
       .returns<CheckinRow[]>();
     if (error) throw error;
     const rows = data ?? [];
-    const paths = rows.map((r) => r.photo_path).filter(Boolean);
+    const paths = rows.map((r) => r.photo_path).filter((p): p is string => !!p);
     const urls = new Map<string, string>();
     if (paths.length) {
       const { data: signed } = await sb.storage.from(BUCKET).createSignedUrls(paths, SIGNED_URL_TTL);
@@ -227,7 +333,8 @@ export const api = {
       habitId: r.habit_id,
       dateKey: r.date_key,
       createdAt: r.created_at,
-      photoUri: urls.get(r.photo_path) ?? '',
+      photoUri: (r.photo_path && urls.get(r.photo_path)) || '',
+      health: r.health ?? undefined,
       note: r.note ?? undefined,
       reactions: r.reactions ?? {},
       disputed: r.disputed,
@@ -238,11 +345,15 @@ export const api = {
   // ---------- Provas ----------
   async addCheckin(c: Checkin) {
     const sb = supabase();
-    const path = `${c.duelId}/${c.id}.jpg`;
-    const bytes = await new File(c.photoUri).arrayBuffer();
-    const { error: upErr } = await sb.storage.from(BUCKET).upload(path, bytes, { contentType: 'image/jpeg' });
-    // Em uma nova tentativa o arquivo pode já existir: segue para o insert.
-    if (upErr && !/exists|duplicate/i.test(upErr.message)) throw upErr;
+    let path: string | null = null;
+    // Prova do relógio não tem foto: sobe só os números.
+    if (!c.health) {
+      path = `${c.duelId}/${c.id}.jpg`;
+      const bytes = await new File(c.photoUri).arrayBuffer();
+      const { error: upErr } = await sb.storage.from(BUCKET).upload(path, bytes, { contentType: 'image/jpeg' });
+      // Em uma nova tentativa o arquivo pode já existir: segue para o insert.
+      if (upErr && !/exists|duplicate/i.test(upErr.message)) throw upErr;
+    }
     const { error } = await sb.from('checkins').insert({
       id: c.id,
       duel_id: c.duelId,
@@ -251,6 +362,7 @@ export const api = {
       date_key: c.dateKey,
       created_at: c.createdAt,
       photo_path: path,
+      health: c.health ?? null,
       note: c.note ?? null,
       reactions: c.reactions,
       disputed: false,
@@ -285,7 +397,7 @@ export const api = {
     const sb = supabase();
     const { error } = await sb.from('checkins').delete().eq('id', c.id);
     if (error) throw error;
-    await sb.storage.from(BUCKET).remove([`${c.duelId}/${c.id}.jpg`]);
+    if (!c.health) await sb.storage.from(BUCKET).remove([`${c.duelId}/${c.id}.jpg`]);
   },
 
   /** Escuta mudanças em um duelo (provas, jogadores e configurações). */

@@ -24,6 +24,7 @@ export default function ProfileScreen() {
   const duel = useActiveDuel();
   const checkins = useActiveCheckins();
   const leaveDuel = useGame((s) => s.leaveDuel);
+  const blockRival = useGame((s) => s.blockRival);
   const book = useScoreBook();
   const today = useToday();
   const { me, opponent } = usePlayers();
@@ -58,6 +59,30 @@ export default function ProfileScreen() {
         },
       },
     ]);
+
+  const block = () => {
+    if (!opponent) return;
+    Alert.alert(
+      `Bloquear ${opponent.name}?`,
+      `Você sai de "${duel.name}", suas provas desse duelo são apagadas e ${opponent.name} não poderá mais duelar com você. Dá para desbloquear depois em Minha conta.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Bloquear',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await blockRival(duel.id);
+              haptic('success');
+              router.dismissTo('/');
+            } catch (e) {
+              Alert.alert('Ops!', e instanceof Error ? e.message : String(e));
+            }
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <Screen>
@@ -147,6 +172,7 @@ export default function ProfileScreen() {
       </Card>
 
       <Button title="Sair do duelo" variant="ghost" onPress={leave} />
+      {opponent ? <Button title={`Bloquear ${opponent.name}`} icon="🚫" variant="danger" onPress={block} /> : null}
     </Screen>
   );
 }

@@ -10,6 +10,7 @@ import { Button, Card, haptic, ProgressBar, Row, Txt } from '@/components/ui';
 import { C, S } from '@/constants/theme';
 import { DEFAULT_HABIT_IDS } from '@/domain/habits';
 import { useGame } from '@/store/useGame';
+import { PremiumRequiredError } from '@/sync/supabase';
 
 const STAKES = ['um açaí 🍧', 'o jantar 🍝', 'o cinema 🎬', 'lavar a louça 🧽', 'um café ☕'];
 
@@ -36,7 +37,8 @@ export default function NewDuelScreen() {
       openDuel(id);
       router.replace('/duel');
     } catch (e) {
-      Alert.alert('Ops!', e instanceof Error ? e.message : String(e));
+      if (e instanceof PremiumRequiredError) router.replace('/premium');
+      else Alert.alert('Ops!', e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }

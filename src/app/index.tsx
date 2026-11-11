@@ -10,7 +10,8 @@ import { getHabit } from '@/domain/habits';
 import { ScoreBook } from '@/domain/scoring';
 import type { Checkin, Duel } from '@/domain/types';
 import { useToday } from '@/hooks/useScoreBook';
-import { useGame } from '@/store/useGame';
+import { FREE_DUEL_LIMIT } from '@/lib/premium';
+import { useCanAddDuel, useGame } from '@/store/useGame';
 
 const NO_CHECKINS: Checkin[] = [];
 
@@ -112,16 +113,25 @@ export default function HomeScreen() {
   const syncing = useGame((s) => s.syncing);
   const syncError = useGame((s) => s.syncError);
   const refreshAll = useGame((s) => s.refreshAll);
+  const premium = useGame((s) => s.plan.premium);
+  const canAddDuel = useCanAddDuel();
 
   const list = order.map((id) => duels[id]).filter((d): d is Duel => !!d);
+  // No plano grátis, depois do limite, os botões levam para o Premium.
+  const goTo = (path: '/new-duel' | '/join') => router.push(canAddDuel ? path : '/premium');
 
   return (
     <Screen refreshControl={<RefreshControl refreshing={syncing} onRefresh={refreshAll} tintColor={C.primary} />}>
       <Row style={{ justifyContent: 'space-between' }}>
         <View style={{ flex: 1 }}>
-          <Txt variant="label" color={C.primaryDark}>
-            🥊 Level Fit
-          </Txt>
+          <Row gap={S.sm}>
+            <Txt variant="label" color={C.primaryDark}>
+              🥊 Level Fit
+            </Txt>
+            <Pressable onPress={() => router.push('/premium')} hitSlop={8} accessibilityRole="button">
+              <Chip label={premium ? '🏆 Premium' : 'Grátis'} color={premium ? C.gold + '55' : C.surface2} textColor={C.ink} />
+            </Pressable>
+          </Row>
           <Txt variant="title" numberOfLines={1}>
             Olá, {account.name}!
           </Txt>
@@ -136,9 +146,20 @@ export default function HomeScreen() {
       ) : null}
 
       <Row gap={S.sm}>
-        <Button title="Novo duelo" icon="⚔️" onPress={() => router.push('/new-duel')} style={{ flex: 1 }} />
-        <Button title="Entrar" icon="🔑" variant="secondary" onPress={() => router.push('/join')} style={{ flex: 1 }} />
+        <Button title="Novo duelo" icon="⚔️" onPress={() => goTo('/new-duel')} style={{ flex: 1 }} />
+        <Button title="Entrar" icon="🔑" variant="secondary" onPress={() => goTo('/join')} style={{ flex: 1 }} />
       </Row>
+
+      {!canAddDuel ? (
+        <Pressable onPress={() => router.push('/premium')} accessibilityRole="button">
+          <Card style={{ backgroundColor: C.gold + '33' }}>
+            <Txt variant="h3">🏆 Quer desafiar mais gente?</Txt>
+            <Txt variant="small" color={C.textDim}>
+              O plano grátis tem {FREE_DUEL_LIMIT} duelo por vez. Com o Premium você tem duelos ilimitados.
+            </Txt>
+          </Card>
+        </Pressable>
+      ) : null}
 
       {list.length === 0 ? (
         <Card style={{ alignItems: 'center', paddingVertical: S.xxl }}>

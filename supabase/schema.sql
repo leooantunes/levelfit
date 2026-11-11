@@ -65,6 +65,17 @@ $$;
 revoke all on function private.is_member(uuid) from public, anon;
 grant execute on function private.is_member(uuid) to authenticated;
 
+-- Gatilho do painel que liga o RLS em toda tabela nova do public (event trigger
+-- "ensure_rls"). A função não precisa ser chamável pela API (migração
+-- "revoke_rls_auto_enable_execute").
+do $$
+begin
+  if to_regprocedure('public.rls_auto_enable()') is not null then
+    revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
+  end if;
+end;
+$$;
+
 -- Versão antiga (public.is_member) ficava exposta na API.
 drop function if exists public.is_member(uuid) cascade;
 
@@ -211,7 +222,7 @@ create policy "owner deletes proofs" on storage.objects for delete to authentica
   using (bucket_id = 'proofs' and owner_id = (select auth.uid())::text);
 
 -- ---------------------------------------------------------------------------
--- Integridade das provas (migração "checkin_update_guard_and_set_reaction")
+-- Integridade das provas (aplicada na migração "reports_and_checkin_guard")
 -- O dono não pode contestar/liberar a própria prova, e cada um só mexe na
 -- própria reação. set_reaction troca uma reação de forma atômica.
 -- ---------------------------------------------------------------------------
@@ -246,3 +257,189 @@ returns jsonb language sql security invoker set search_path = '' as $$
 $$;
 revoke all on function public.set_reaction(uuid, text) from public, anon;
 grant execute on function public.set_reaction(uuid, text) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Denúncias de provas (App Store, regra 1.2 — conteúdo gerado por usuários)
+-- (aplicada na migração "reports_and_checkin_guard")
+-- Membro do duelo denuncia a prova do outro; ninguém lê pelo app — a equipe
+-- analisa no painel (Table Editor → reports) e marca status = 'resolvida'.
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.reports (
+  id uuid primary key default gen_random_uuid(),
+  checkin_id uuid references public.checkins(id) on delete set null,
+  duel_id uuid not null references public.duels(id) on delete cascade,
+  reported_player_id uuid references auth.users(id) on delete set null,
+  reporter_id uuid default auth.uid() references auth.users(id) on delete set null,
+  reason text not null check (reason in ('ofensiva', 'nudez', 'spam', 'outro')),
+  details text check (details is null or char_length(details) <= 500),
+  status text not null default 'aberta' check (status in ('aberta', 'resolvida')),
+  created_at timestamptz not null default now()
+);
+create index if not exists reports_checkin_idx on public.reports(checkin_id);
+create index if not exists reports_duel_idx on public.reports(duel_id);
+create index if not exists reports_reported_idx on public.reports(reported_player_id);
+create index if not exists reports_reporter_idx on public.reports(reporter_id);
+alter table public.reports enable row level security;
+revoke all on public.reports from anon, authenticated;
+-- reporter_id fica de fora: sempre o default auth.uid() (ninguém denuncia em nome de outro).
+grant insert (checkin_id, duel_id, reported_player_id, reason, details) on public.reports to authenticated;
+drop policy if exists "member reports proof in own duel" on public.reports;
+create policy "member reports proof in own duel" on public.reports for insert to authenticated
+  with check (
+    reporter_id = (select auth.uid())
+    and private.is_member(duel_id)
+    and reported_player_id is distinct from (select auth.uid())
+    and exists (select 1 from public.checkins c where c.id = checkin_id and c.duel_id = reports.duel_id and c.player_id = reports.reported_player_id)
+  );
+
+-- Excluir conta: Edge Function supabase/functions/delete-account (verify_jwt = false,
+-- valida o usuário por dentro). Deploy: npx supabase functions deploy delete-account --no-verify-jwt
+
+-- ---------------------------------------------------------------------------
+-- Premium (migração "premium_entitlements_and_duel_limit")
+-- Grátis: 1 duelo ativo (criado ou entrado). Premium: ilimitado.
+-- Quem grava entitlements é a Edge Function premium-sync (RevenueCat → Supabase);
+-- o app só lê a própria linha. create_duel/join_duel conferem o limite.
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.entitlements (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  premium_until timestamptz,
+  is_lifetime boolean not null default false,
+  product_id text,
+  updated_at timestamptz not null default now()
+);
+alter table public.entitlements enable row level security;
+revoke all on public.entitlements from anon, authenticated;
+grant select on public.entitlements to authenticated;
+drop policy if exists "user reads own entitlement" on public.entitlements;
+create policy "user reads own entitlement" on public.entitlements for select to authenticated
+  using (user_id = (select auth.uid()));
+
+create or replace function private.is_premium(uid uuid) returns boolean
+language sql security definer stable set search_path = '' as $$
+  select exists (
+    select 1 from public.entitlements e
+    where e.user_id = uid and (e.is_lifetime or e.premium_until > now())
+  );
+$$;
+revoke all on function private.is_premium(uuid) from public, anon, authenticated;
+
+create or replace function private.assert_can_add_duel() returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if not private.is_premium((select auth.uid()))
+     and (select count(*) from public.duel_players where player_id = (select auth.uid())) >= 1 then
+    raise exception 'premium_required: O plano grátis permite 1 duelo por vez. Assine o Premium para ter mais.'
+      using errcode = 'P0001';
+  end if;
+end;
+$$;
+revoke all on function private.assert_can_add_duel() from public, anon, authenticated;
+-- create_duel e join_duel (acima) passaram a chamar private.assert_can_add_duel():
+-- create_duel logo após checar auth.uid(); join_duel depois de checar se o duelo tem vaga.
+
+-- ---------------------------------------------------------------------------
+-- Bloqueio de usuários (App Store, regra 1.2) — migração "block_players"
+-- block_player(duelo): guarda o bloqueio, apaga as provas de quem bloqueia
+-- naquele duelo e tira essa pessoa do duelo. join_duel recusa entrar num duelo
+-- com alguém bloqueado (nos dois sentidos). A lista fica em Minha conta.
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.blocks (
+  blocker_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  blocked_id uuid not null references auth.users(id) on delete cascade,
+  blocked_name text not null default '' check (char_length(blocked_name) <= 32),
+  blocked_avatar text not null default '🙂' check (char_length(blocked_avatar) <= 16),
+  created_at timestamptz not null default now(),
+  primary key (blocker_id, blocked_id),
+  check (blocker_id <> blocked_id)
+);
+create index if not exists blocks_blocked_idx on public.blocks(blocked_id);
+alter table public.blocks enable row level security;
+revoke all on public.blocks from anon, authenticated;
+-- Só leitura e desbloqueio pela API; bloquear é pela RPC block_player.
+grant select, delete on public.blocks to authenticated;
+drop policy if exists "user reads own blocks" on public.blocks;
+create policy "user reads own blocks" on public.blocks for select to authenticated
+  using (blocker_id = (select auth.uid()));
+drop policy if exists "user unblocks" on public.blocks;
+create policy "user unblocks" on public.blocks for delete to authenticated
+  using (blocker_id = (select auth.uid()));
+
+create or replace function public.block_player(p_duel uuid)
+returns void language plpgsql security definer set search_path = '' as $$
+declare
+  v_uid uuid := (select auth.uid());
+  v_rival public.duel_players;
+begin
+  if v_uid is null then raise exception 'Não autenticado'; end if;
+  if not exists (select 1 from public.duel_players where duel_id = p_duel and player_id = v_uid) then
+    raise exception 'Você não está neste duelo' using errcode = '42501';
+  end if;
+  select * into v_rival from public.duel_players where duel_id = p_duel and player_id <> v_uid limit 1;
+  if v_rival.player_id is null then raise exception 'Este duelo ainda não tem rival'; end if;
+  insert into public.blocks (blocker_id, blocked_id, blocked_name, blocked_avatar)
+    values (v_uid, v_rival.player_id, v_rival.name, v_rival.avatar)
+    on conflict (blocker_id, blocked_id) do nothing;
+  delete from public.checkins where duel_id = p_duel and player_id = v_uid;
+  delete from public.duel_players where duel_id = p_duel and player_id = v_uid;
+end;
+$$;
+revoke all on function public.block_player(uuid) from public, anon;
+grant execute on function public.block_player(uuid) to authenticated;
+
+-- join_duel (versão atual: limite do plano grátis + bloqueios)
+create or replace function public.join_duel(
+  p_code text, p_player_name text, p_avatar text, p_color text
+) returns public.duels language plpgsql security definer set search_path = '' as $$
+declare
+  v_duel public.duels;
+  v_count int;
+begin
+  if (select auth.uid()) is null then raise exception 'Não autenticado'; end if;
+  select * into v_duel from public.duels where code = upper(trim(p_code)) for update;
+  if v_duel.id is null then raise exception 'Código inválido'; end if;
+  if exists (select 1 from public.duel_players where duel_id = v_duel.id and player_id = (select auth.uid())) then
+    return v_duel;
+  end if;
+  select count(*) into v_count from public.duel_players where duel_id = v_duel.id;
+  if v_count >= 2 then raise exception 'Este duelo já tem 2 jogadores'; end if;
+  -- Mensagem neutra: não revela quem bloqueou quem.
+  if exists (
+    select 1 from public.duel_players dp join public.blocks b
+      on (b.blocker_id = (select auth.uid()) and b.blocked_id = dp.player_id)
+      or (b.blocker_id = dp.player_id and b.blocked_id = (select auth.uid()))
+    where dp.duel_id = v_duel.id
+  ) then
+    raise exception 'Não foi possível entrar neste duelo.';
+  end if;
+  perform private.assert_can_add_duel();
+  insert into public.duel_players (duel_id, player_id, name, avatar, color)
+    values (v_duel.id, (select auth.uid()), p_player_name, p_avatar, p_color);
+  return v_duel;
+end;
+$$;
+revoke all on function public.join_duel(text, text, text, text) from public, anon;
+grant execute on function public.join_duel(text, text, text, text) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Provas do relógio (migração "health_checkins")
+-- Apple Health / Health Connect: quando a pessoa bate a meta no relógio, o app
+-- registra a prova sem foto, só com o resultado do dia em "health"
+-- ({"metric":"steps","value":10432,"source":"Apple Health"}). Toda prova tem
+-- foto OU resultado do relógio, nunca os dois. O rival pode contestar igual.
+-- ---------------------------------------------------------------------------
+
+alter table public.checkins alter column photo_path drop not null;
+alter table public.checkins add column if not exists health jsonb;
+alter table public.checkins drop constraint if exists checkins_proof_present;
+alter table public.checkins add constraint checkins_proof_present check (
+  (photo_path is not null and health is null)
+  or (photo_path is null and health is not null
+      and jsonb_typeof(health) = 'object'
+      and health ->> 'metric' in ('steps', 'exercise', 'sleep', 'mindful', 'daylight')
+      and jsonb_typeof(health -> 'value') = 'number'
+      and char_length(health::text) <= 300)
+);
