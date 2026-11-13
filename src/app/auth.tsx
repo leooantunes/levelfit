@@ -8,7 +8,7 @@ import { IconBadge } from '@/components/IconBadge';
 import { AvatarPicker, Input } from '@/components/ProfileFields';
 import { Avatar, Button, Card, haptic, Row, Txt } from '@/components/ui';
 import { AVATARS, C, hardShadow, PLAYER_COLORS, R, S, STROKE } from '@/constants/theme';
-import { openPrivacyPolicy } from '@/lib/links';
+import { openPrivacyPolicy, openTerms } from '@/lib/links';
 import { useGame } from '@/store/useGame';
 import { api, isOnlineAvailable } from '@/sync/supabase';
 
@@ -199,11 +199,17 @@ export default function AuthScreen() {
         <Input value={name} onChangeText={setName} placeholder="Seu nome ou apelido" maxLength={16} autoFocus />
         <AvatarPicker avatar={avatar} color={color} onAvatar={setAvatar} onColor={setColor} />
         <Button title="Criar conta ⚡" onPress={doSignUp} loading={busy} disabled={!name.trim()} />
-        <Pressable onPress={openPrivacyPolicy} hitSlop={8}>
-          <Txt variant="small" style={{ textAlign: 'center' }}>
-            Ao criar a conta, você concorda com a <Txt variant="small" color={C.primaryDark}>Política de privacidade</Txt>.
+        <Txt variant="small" style={{ textAlign: 'center' }}>
+          Ao criar a conta, você concorda com os{' '}
+          <Txt variant="small" color={C.primaryDark} onPress={openTerms}>
+            Termos de uso
+          </Txt>{' '}
+          e a{' '}
+          <Txt variant="small" color={C.primaryDark} onPress={openPrivacyPolicy}>
+            Política de privacidade
           </Txt>
-        </Pressable>
+          .
+        </Txt>
       </View>
     ),
   };

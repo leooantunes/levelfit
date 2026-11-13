@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,15 +8,11 @@ import { Mascot } from '@/components/Brand';
 import { IconBadge } from '@/components/IconBadge';
 import { Button, Card, haptic, Row, Txt } from '@/components/ui';
 import { C, S } from '@/constants/theme';
-import { openPrivacyPolicy } from '@/lib/links';
+import { openPrivacyPolicy, openTerms } from '@/lib/links';
 import { FREE_DUEL_LIMIT, openManageSubscriptions, purchasesAvailable } from '@/lib/premium';
 import { useGame } from '@/store/useGame';
 
-// Termos padrão da Apple para assinaturas (EULA) e política de privacidade do app.
-const TERMS_URL =
-  Platform.OS === 'ios'
-    ? 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/'
-    : 'https://play.google.com/intl/pt-BR/about/play-terms/';
+
 
 const BENEFITS = [
   { icon: { ios: 'figure.boxing', android: 'sports_mma', web: 'sports_mma' }, color: C.redCorner, title: 'Duelos ilimitados', desc: 'Desafie quantos amigos quiser ao mesmo tempo' },
@@ -149,7 +145,7 @@ export default function PremiumScreen() {
           pagamento único, sem renovação.
         </Txt>
         <Row style={{ justifyContent: 'center', flexWrap: 'wrap' }} gap={S.lg}>
-          <Pressable onPress={() => Linking.openURL(TERMS_URL)} hitSlop={8}>
+          <Pressable onPress={openTerms} hitSlop={8}>
             <Txt variant="small" color={C.primaryDark}>
               Termos de uso
             </Txt>

@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Level Fit — Hábitos saudáveis viram uma luta</title>
+<meta name="description" content="Level Fit: desafie um amigo num duelo de hábitos saudáveis. Poste a prova, some pontos e ganhe o cinturão do dia, da semana e do mês.">
+<meta property="og:title" content="Level Fit">
+<meta property="og:description" content="Hábitos saudáveis viram uma luta. Desafie um amigo, poste a prova e ganhe o cinturão.">
+<meta property="og:image" content="assets/icon.png">
+<link rel="icon" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #2B1B17;
+    --bg: #FFF3E3;
+    --surface: #FFFFFF;
+    --canvas: #FBE6D2;
+    --ember: #F26B1D;
+    --ember-dark: #C9481A;
+    --gold: #F7B928;
+    --red: #E2412F;
+    --blue: #2F7DD1;
+    --green: #3FAE5A;
+    --night: #1E1210;
+    --dim: #6E544B;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  [id] { scroll-margin-top: 76px; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 500 16px/1.6 Rubik, system-ui, -apple-system, sans-serif;
+  }
+  a { color: var(--ember-dark); font-weight: 600; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+
+  /* Navegação */
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--bg);
+    border-bottom: 3px solid var(--ink);
+  }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 60px; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font: 400 20px Bungee, sans-serif; }
+  .brand img { width: 36px; height: 36px; border-radius: 10px; border: 2px solid var(--ink); }
+  .brand span { color: var(--ember); }
+  nav ul { display: flex; gap: 18px; list-style: none; margin: 0; padding: 0; }
+  nav ul a { color: var(--ink); text-decoration: none; font-weight: 600; font-size: 15px; }
+  nav ul a:hover { color: var(--ember-dark); }
+
+  /* Hero */
+  .hero {
+    background: radial-gradient(circle at 50% 30%, #7A4630, #3A231D 55%, var(--night));
+    color: #FFE9D6;
+    border-bottom: 3px solid var(--ink);
+  }
+  .hero .wrap { display: grid; grid-template-columns: 1.2fr 1fr; align-items: center; gap: 24px; padding-top: 56px; padding-bottom: 56px; }
+  .hero h1 { font: 400 clamp(40px, 7vw, 68px)/1.05 Bungee, sans-serif; margin: 0 0 12px; color: #fff; }
+  .hero h1 span { color: var(--ember); text-shadow: 0 5px 0 var(--ink); }
+  .hero p.lead { font-size: 20px; margin: 0 0 24px; max-width: 34ch; }
+  .hero img.mascot { width: 100%; max-width: 360px; justify-self: center; filter: drop-shadow(0 12px 0 rgba(0,0,0,.35)); }
+  .stores { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--ember); color: #fff; text-decoration: none;
+    font: 800 15px Rubik, sans-serif; letter-spacing: .8px; text-transform: uppercase;
+    padding: 14px 22px; border: 3px solid var(--ink); border-radius: 16px; box-shadow: 0 4px 0 var(--ink);
+  }
+  .btn.alt { background: var(--surface); color: var(--ink); }
+  .soon { font-size: 13px; opacity: .8; margin-top: 10px; }
+
+  /* Seções */
+  section { padding: 56px 0; }
+  h2 { font: 400 clamp(26px, 4.5vw, 34px)/1.15 Bungee, sans-serif; margin: 0 0 8px; }
+  .kicker { font-weight: 800; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: var(--ember-dark); margin: 0 0 6px; }
+  .sub { color: var(--dim); margin: 0 0 28px; max-width: 60ch; }
+  .card {
+    background: var(--surface); border: 3px solid var(--ink); border-radius: 22px;
+    box-shadow: 0 5px 0 var(--ink); padding: 22px;
+  }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .feature .icon { font-size: 34px; line-height: 1; }
+  .feature h3 { margin: 10px 0 4px; font-size: 18px; font-weight: 800; }
+  .feature p { margin: 0; color: var(--dim); font-size: 15px; }
+
+  .steps { counter-reset: s; display: grid; gap: 14px; padding: 0; list-style: none; margin: 0; }
+  .steps li { counter-increment: s; display: flex; gap: 14px; align-items: flex-start; }
+  .steps li::before {
+    content: counter(s); flex: none; width: 40px; height: 40px; border-radius: 50%;
+    display: grid; place-items: center; background: var(--ink); color: var(--gold);
+    font: 400 18px Bungee, sans-serif; transform: rotate(-8deg); box-shadow: 0 3px 0 var(--ember);
+  }
+  .steps b { display: block; }
+
+  .vs-band { background: var(--canvas); border-top: 3px solid var(--ink); border-bottom: 3px solid var(--ink); }
+  .plans { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .plans ul { margin: 8px 0 0; padding-left: 20px; }
+  .plans .pro { background: #FFF6D6; box-shadow: 0 5px 0 var(--gold), 0 5px 0 3px var(--ink); }
+
+  /* Documentos legais */
+  .legal { background: var(--surface); border-top: 3px solid var(--ink); }
+  .doc { max-width: 760px; }
+  .doc h3 { font-size: 19px; font-weight: 800; margin: 30px 0 6px; }
+  .doc p, .doc li { color: #3D2A24; }
+  .doc ul { padding-left: 22px; }
+  .updated { color: var(--dim); font-size: 14px; margin: 0 0 18px; }
+  .toc { columns: 2; column-gap: 28px; padding-left: 20px; margin: 0 0 8px; font-size: 15px; }
+  .toc a { color: var(--ink); font-weight: 500; }
+  .note {
+    background: #FFF6D6; border: 2px dashed var(--ink); border-radius: 14px; padding: 12px 16px; font-size: 15px;
+  }
+  mark.ph { background: var(--gold); color: var(--ink); padding: 0 4px; border-radius: 4px; font-weight: 600; }
+  hr.sep { border: 0; border-top: 3px dashed #EED6C1; margin: 56px 0; }
+
+  footer { background: var(--night); color: #FFE9D6; padding: 32px 0; font-size: 14px; }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+  footer a { color: var(--gold); }
+
+  @media (max-width: 760px) {
+    nav ul { display: none; }
+    .hero .wrap { grid-template-columns: 1fr; text-align: center; padding-top: 36px; }
+    .hero p.lead { margin-left: auto; margin-right: auto; }
+    .hero img.mascot { max-width: 220px; grid-row: 1; }
+    .stores { justify-content: center; }
+    .grid, .plans { grid-template-columns: 1fr; }
+    .toc { columns: 1; }
+    section { padding: 40px 0; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#topo"><img src="assets/icon.png" alt="">LEVEL <span>FIT</span></a>
+    <ul>
+      <li><a href="#como-funciona">Como funciona</a></li>
+      <li><a href="#premium">Premium</a></li>
+      <li><a href="#termos">Termos</a></li>
+      <li><a href="#privacidade">Privacidade</a></li>
+      <li><a href="#suporte">Suporte</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero" id="topo">
+  <div class="wrap">
+    <div>
+      <h1>LEVEL <span>FIT</span></h1>
+      <p class="lead">Hábitos saudáveis viram uma luta. Desafie um amigo, poste a prova e ganhe o cinturão do dia, da semana e do mês.</p>
+      <div class="stores">
+        <a class="btn" href="#">🍎 App Store</a>
+        <a class="btn alt" href="#">▶ Google Play</a>
+      </div>
+      <p class="soon">Disponível para iPhone e Android.</p>
+    </div>
+    <img class="mascot" src="assets/brasa.png" alt="Brasa, o mascote do Level Fit: um lutador de fogo com luvas de boxe e cinturão de campeão">
+  </div>
+</header>
+
+<main>
+  <section id="sobre">
+    <div class="wrap">
+      <p class="kicker">O app</p>
+      <h2>Cada dia é um round</h2>
+      <p class="sub">Você e seu rival escolhem as metas. Cada hábito cumprido vale pontos, mas só com prova. No fim do dia, da semana e do mês, quem somar mais leva a vitória.</p>
+      <div class="grid">
+        <div class="card feature"><div class="icon">🎯</div><h3>Metas sugeridas</h3><p>Água, leitura, dieta, treino, sono, passos, meditação e mais 8 hábitos, em pacotes prontos ou do seu jeito.</p></div>
+        <div class="card feature"><div class="icon">📸</div><h3>Prova com foto</h3><p>Cumpriu? Tire a foto. Seu rival pode reagir, ou contestar se achar que é migué.</p></div>
+        <div class="card feature"><div class="icon">⌚</div><h3>Relógio conectado</h3><p>Passos, treinos e sono podem virar prova automática pelo Apple Health ou Health Connect.</p></div>
+        <div class="card feature"><div class="icon">🏆</div><h3>Ranking com festa</h3><p>Placar diário, semanal e mensal, com animação de vitória, confete e troféu para quem vencer.</p></div>
+        <div class="card feature"><div class="icon">🔥</div><h3>Combos e bônus</h3><p>Dias seguidos multiplicam seus pontos. Completar todas as metas do dia dá bônus.</p></div>
+        <div class="card feature"><div class="icon">📱</div><h3>Widget</h3><p>Acompanhe o placar do dia direto na tela inicial do celular.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="como-funciona" class="vs-band">
+    <div class="wrap">
+      <p class="kicker">Como funciona</p>
+      <h2>Do gongo ao cinturão</h2>
+      <p class="sub">Em menos de um minuto você está no ringue.</p>
+      <ol class="steps">
+        <li><div><b>Crie sua conta</b>Escolha nome, avatar e a cor do seu canto.</div></li>
+        <li><div><b>Monte o duelo</b>Escolha as metas e, se quiser, uma aposta (tipo “quem perder paga o açaí”).</div></li>
+        <li><div><b>Chame seu rival</b>Mande o código de 6 letras. Quando ele entrar, a luta começa.</div></li>
+        <li><div><b>Poste as provas</b>Cada meta cumprida com foto ou pelo relógio soma pontos no placar.</div></li>
+        <li><div><b>Ganhe o cinturão</b>No fim de cada dia, semana e mês, o app anuncia o vencedor.</div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="premium">
+    <div class="wrap">
+      <p class="kicker">Planos</p>
+      <h2>Grátis para lutar, Premium para dominar</h2>
+      <p class="sub">O Level Fit é gratuito. O Premium libera duelos ilimitados ao mesmo tempo.</p>
+      <div class="plans">
+        <div class="card">
+          <h3 style="margin:0;font-weight:800">Grátis</h3>
+          <ul>
+            <li>1 duelo ativo por vez</li>
+            <li>Todas as metas, provas, rankings e conquistas</li>
+            <li>Widget e lembretes</li>
+          </ul>
+        </div>
+        <div class="card pro">
+          <h3 style="margin:0;font-weight:800">Premium 🏆</h3>
+          <ul>
+            <li>Duelos ilimitados, cada um com um rival diferente</li>
+            <li>Planos mensal, anual ou vitalício</li>
+            <li>Preços na loja, em moeda local</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ TERMOS DE USO ============================ -->
+  <section id="termos" class="legal">
+    <div class="wrap doc">
+      <p class="kicker">Documento legal</p>
+      <h2>Termos de Uso</h2>
+      <p class="updated">Em vigor desde 13 de novembro de 2026</p>
+
+      <ol class="toc">
+        <li><a href="#t1">Aceitação</a></li>
+        <li><a href="#t2">O serviço</a></li>
+        <li><a href="#t3">Quem pode usar</a></li>
+        <li><a href="#t4">Sua conta</a></li>
+        <li><a href="#t5">Provas e conteúdo</a></li>
+        <li><a href="#t6">Regras de conduta</a></li>
+        <li><a href="#t7">Denúncias e moderação</a></li>
+        <li><a href="#t8">Apostas entre jogadores</a></li>
+        <li><a href="#t9">Saúde</a></li>
+        <li><a href="#t10">Assinatura Premium</a></li>
+        <li><a href="#t11">Compartilhamento</a></li>
+        <li><a href="#t12">Propriedade intelectual</a></li>
+        <li><a href="#t13">Disponibilidade</a></li>
+        <li><a href="#t14">Responsabilidade</a></li>
+        <li><a href="#t15">Encerramento</a></li>
+        <li><a href="#t16">Lojas de aplicativos</a></li>
+        <li><a href="#t17">Mudanças nos termos</a></li>
+        <li><a href="#t18">Lei aplicável e contato</a></li>
+      </ol>
+
+      <h3 id="t1">1. Aceitação</h3>
+      <p>Estes Termos de Uso regem o uso do aplicativo Level Fit (o “app”), oferecido por <mark class="ph">[SEU NOME OU EMPRESA]</mark> (“nós”). Ao criar uma conta ou usar o app, você concorda com estes termos e com a <a href="#privacidade">Política de Privacidade</a>. Se não concordar, não use o app.</p>
+
+      <h3 id="t2">2. O serviço</h3>
+      <p>O Level Fit é um jogo de hábitos saudáveis entre duas pessoas. Cada jogador registra hábitos cumpridos com uma foto ou com dados do relógio. O app soma pontos e mostra rankings diários, semanais e mensais. Pontos, níveis, conquistas e vitórias não têm valor em dinheiro e não podem ser trocados ou resgatados.</p>
+
+      <h3 id="t3">3. Quem pode usar</h3>
+      <p>Você precisa ter pelo menos 13 anos para usar o Level Fit. Se tiver menos de 18 anos, use o app com o conhecimento e a autorização dos seus pais ou responsáveis, que também aceitam estes termos.</p>
+
+      <h3 id="t4">4. Sua conta</h3>
+      <ul>
+        <li>Você cria a conta com e-mail e senha e é responsável por manter a senha em segurança.</li>
+        <li>As informações do seu perfil devem ser verdadeiras e não podem imitar outra pessoa.</li>
+        <li>A conta é pessoal e intransferível.</li>
+        <li>Você pode excluir a conta quando quiser, em <b>Minha conta → Excluir minha conta</b>.</li>
+      </ul>
+
+      <h3 id="t5">5. Provas e conteúdo que você envia</h3>
+      <p>As fotos, legendas, reações e demais conteúdos que você envia continuam sendo seus. Para o app funcionar, você nos dá uma licença gratuita, não exclusiva e limitada para guardar esse conteúdo e exibi-lo aos participantes dos seus duelos. Essa licença também permite analisar o conteúdo quando ele for denunciado. Ela termina quando você apaga o conteúdo ou exclui a conta.</p>
+      <p>Você garante que tem o direito de enviar o conteúdo e que ele não viola direitos de outras pessoas. Só fotografe outras pessoas com a autorização delas.</p>
+
+      <h3 id="t6">6. Regras de conduta</h3>
+      <p><b>Temos tolerância zero com conteúdo impróprio e usuários abusivos.</b> É proibido enviar ou fazer:</p>
+      <ul>
+        <li>nudez, conteúdo sexual ou qualquer conteúdo envolvendo menores de forma imprópria;</li>
+        <li>conteúdo violento, de ódio, discriminatório, ofensivo, ameaças ou assédio;</li>
+        <li>conteúdo ilegal, que incentive atividades perigosas ou que viole direitos autorais ou de imagem;</li>
+        <li>spam, propaganda ou fotos que não tenham relação com o hábito registrado;</li>
+        <li>tentativas de burlar o placar, invadir contas, explorar falhas ou atrapalhar o funcionamento do app.</li>
+      </ul>
+
+      <h3 id="t7">7. Denúncias, bloqueio e moderação</h3>
+      <p>Você pode denunciar qualquer prova pelo próprio app e bloquear um rival a qualquer momento. Ao bloquear, você sai do duelo e as suas provas desse duelo são apagadas. Analisamos as denúncias em até 24 horas. Podemos remover conteúdo que viole estes termos e suspender ou encerrar a conta de quem o enviou, sem aviso prévio.</p>
+      <p>A contestação de provas é uma regra do jogo entre os jogadores: a prova contestada deixa de pontuar até ser aceita. Ela não substitui a denúncia de conteúdo impróprio.</p>
+
+      <h3 id="t8">8. Apostas entre jogadores</h3>
+      <p>O campo “aposta” é só um texto combinado entre os jogadores, como “quem perder paga o açaí”. O Level Fit não recebe, guarda nem transfere dinheiro ou bens, não intermedeia apostas e não garante que alguém cumpra o combinado. Não use o app para apostas a dinheiro ou para qualquer atividade proibida por lei. Qualquer combinado é de responsabilidade exclusiva dos jogadores.</p>
+
+      <h3 id="t9">9. Saúde</h3>
+      <p>O Level Fit é um jogo de motivação e não oferece orientação médica, nutricional ou de educação física. As metas são sugestões gerais e podem não servir para você. Consulte um profissional de saúde antes de mudar sua alimentação, seu sono ou sua rotina de exercícios, principalmente se tiver alguma condição de saúde. Pare qualquer atividade se sentir dor ou mal-estar. A integração com o Apple Health ou o Health Connect é opcional e funciona como descrito na <a href="#privacidade">Política de Privacidade</a>.</p>
+
+      <h3 id="t10">10. Assinatura Premium</h3>
+      <ul>
+        <li>O plano grátis permite 1 duelo ativo por vez. O Premium libera duelos ilimitados.</li>
+        <li>O Premium é vendido como assinatura mensal ou anual, ou como compra vitalícia. Preços e condições aparecem no app antes da compra.</li>
+        <li>O pagamento é cobrado na sua conta da App Store ou do Google Play quando você confirma a compra.</li>
+        <li>As assinaturas mensal e anual <b>renovam automaticamente</b> pelo mesmo período e valor, a menos que você cancele pelo menos 24 horas antes do fim do período atual. A renovação é cobrada nas 24 horas anteriores ao fim do período.</li>
+        <li>Você gerencia e cancela a assinatura nos ajustes da sua conta da loja. O cancelamento vale a partir do próximo período, e o Premium continua ativo até o fim do período já pago.</li>
+        <li><b>Excluir a conta ou desinstalar o app não cancela a assinatura.</b> Cancele na loja para não ser cobrado de novo.</li>
+        <li>Reembolsos seguem as regras da Apple ou do Google, conforme a loja em que você comprou, e os direitos garantidos pelo Código de Defesa do Consumidor.</li>
+        <li>O plano vitalício é um pagamento único, sem renovação, e vale enquanto o Level Fit estiver em operação.</li>
+        <li>Para recuperar a compra em outro aparelho, entre na mesma conta e use “Restaurar compras”.</li>
+      </ul>
+
+      <h3 id="t11">11. Compartilhamento em outras redes</h3>
+      <p>O app permite gerar uma imagem de vitória para postar no Instagram ou em outros apps. Você escolhe o que compartilha. O que for publicado nesses serviços segue os termos e políticas deles.</p>
+
+      <h3 id="t12">12. Propriedade intelectual</h3>
+      <p>A marca Level Fit, o mascote Brasa, o design, os textos e o software do app pertencem a <mark class="ph">[SEU NOME OU EMPRESA]</mark> e são protegidos por lei. Você recebe uma licença pessoal, não exclusiva e intransferível para usar o app conforme estes termos. É proibido copiar, modificar, vender ou fazer engenharia reversa do app, exceto quando a lei permitir.</p>
+
+      <h3 id="t13">13. Disponibilidade e mudanças no app</h3>
+      <p>Trabalhamos para manter o app no ar, mas ele pode ficar indisponível por manutenção, falhas técnicas ou motivos fora do nosso controle. Podemos mudar, adicionar ou remover funcionalidades. Se uma mudança afetar o que você pagou, avisaremos no app.</p>
+
+      <h3 id="t14">14. Limitação de responsabilidade</h3>
+      <p>Na medida permitida pela lei, o app é oferecido “no estado em que se encontra”. Não respondemos por:</p>
+      <ul>
+        <li>conteúdo enviado por outros usuários;</li>
+        <li>acordos e apostas entre jogadores;</li>
+        <li>lesões ou problemas de saúde decorrentes de atividades que você escolheu fazer;</li>
+        <li>perda de dados causada por fatores fora do nosso controle.</li>
+      </ul>
+      <p>Nada nestes termos limita direitos que você tenha como consumidor pela legislação brasileira.</p>
+
+      <h3 id="t15">15. Encerramento</h3>
+      <p>Você pode parar de usar o app e excluir a conta a qualquer momento. Podemos suspender ou encerrar contas que violem estes termos. Os dados são tratados conforme a <a href="#privacidade">Política de Privacidade</a>.</p>
+
+      <h3 id="t16">16. Lojas de aplicativos</h3>
+      <p>Estes termos são entre você e <mark class="ph">[SEU NOME OU EMPRESA]</mark>. A Apple e o Google não são partes deles e não são responsáveis pelo app, pelo conteúdo, pela manutenção nem pelo suporte. Se você baixou o app pela App Store, a Apple e suas subsidiárias são terceiras beneficiárias destes termos e podem fazê-los valer contra você. Você também deve seguir os termos de uso da loja em que baixou o app.</p>
+
+      <h3 id="t17">17. Mudanças nestes termos</h3>
+      <p>Podemos atualizar estes termos. A data no topo mostra a versão em vigor. Mudanças importantes serão avisadas no app antes de entrarem em vigor. Continuar usando o app depois disso significa que você concorda com a nova versão.</p>
+
+      <h3 id="t18">18. Lei aplicável e contato</h3>
+      <p>Estes termos seguem as leis da República Federativa do Brasil, incluindo o Código de Defesa do Consumidor, o Marco Civil da Internet e a LGPD. Fica eleito o foro do domicílio do consumidor. Dúvidas sobre estes termos: <mark class="ph">[E-MAIL DE SUPORTE]</mark>.</p>
+
+      <hr class="sep">
+
+      <!-- ============================ PRIVACIDADE ============================ -->
+      <div id="privacidade">
+        <p class="kicker">Documento legal</p>
+        <h2>Política de Privacidade</h2>
+        <p class="updated">Atualizada em 11 de novembro de 2026</p>
+
+        <h3>Quem somos</h3>
+        <p>O Level Fit é um app de duelos de hábitos saudáveis entre amigos, oferecido por <mark class="ph">[SEU NOME OU EMPRESA]</mark>, controlador dos dados tratados no app. Esta política explica quais dados o app usa, para quê e como você controla esses dados.</p>
+
+        <h3>Dados que coletamos</h3>
+        <ul>
+          <li><b>Conta:</b> e-mail e senha. A senha é guardada criptografada pelo nosso provedor de login, e nós não temos acesso a ela.</li>
+          <li><b>Perfil:</b> nome ou apelido, avatar e cor que você escolhe.</li>
+          <li><b>Duelos:</b> nome do duelo, metas escolhidas, aposta (texto livre) e o rival.</li>
+          <li><b>Provas:</b> as fotos que você tira ou escolhe, a observação opcional, a data, as reações e as contestações.</li>
+          <li><b>Assinatura:</b> se você assina o Premium, recebemos da loja (App Store ou Google Play), por meio do RevenueCat, o status e a validade da assinatura. Não recebemos dados do seu cartão.</li>
+          <li><b>Denúncias e bloqueios</b> que você fizer.</li>
+        </ul>
+
+        <h3>Dados de saúde e do relógio</h3>
+        <p>O app só lê dados de saúde se você ligar “Relógio” em Minha conta. Nesse caso, ele lê do Apple Health (iPhone) ou do Health Connect (Android): passos, treinos, sono, meditação e tempo ao ar livre. A leitura acontece no seu celular. Quando você bate uma meta, só o resultado do dia (ex.: “10.432 passos”) vai para o servidor como prova e aparece para o seu rival no duelo.</p>
+        <p>Não guardamos o histórico de saúde, não gravamos nada no Apple Health ou no Health Connect, não usamos esses dados para anúncios ou marketing e não os vendemos nem compartilhamos com terceiros. Você desliga a integração quando quiser em Minha conta e pode revogar a permissão nos ajustes do Saúde ou do Health Connect.</p>
+
+        <h3>Para que usamos</h3>
+        <p>Usamos os dados só para o app funcionar:</p>
+        <ul>
+          <li>entrar na sua conta;</li>
+          <li>mostrar seus duelos, placar e provas para você e seu rival;</li>
+          <li>liberar o Premium;</li>
+          <li>analisar denúncias;</li>
+          <li>impedir duelos com quem você bloqueou.</li>
+        </ul>
+        <p>A base legal é a execução do serviço que você contratou ao criar a conta e, para dados de saúde, o seu consentimento (LGPD, arts. 7º e 11). Não vendemos seus dados, não mostramos anúncios e não rastreamos você em outros apps ou sites.</p>
+
+        <h3>Quem vê suas fotos</h3>
+        <p>Suas provas ficam num armazenamento privado e só aparecem para quem participa do mesmo duelo. Se uma prova for denunciada, a equipe do Level Fit pode vê-la para analisar a denúncia.</p>
+
+        <h3>Permissões do celular</h3>
+        <ul>
+          <li><b>Câmera e fotos:</b> usadas só quando você vai registrar uma prova.</li>
+          <li><b>Saúde (Apple Health / Health Connect):</b> usada só se você conectar o relógio.</li>
+          <li><b>Notificações:</b> lembretes diários criados no próprio aparelho, que você desliga em Minha conta.</li>
+        </ul>
+        <p>Você pode negar qualquer permissão e continuar usando o resto do app.</p>
+
+        <h3>Serviços de terceiros</h3>
+        <ul>
+          <li><b>Supabase:</b> hospeda contas, duelos e fotos. Os servidores podem ficar fora do Brasil, com as garantias exigidas pela LGPD para transferência internacional.</li>
+          <li><b>RevenueCat, Apple e Google:</b> processam a assinatura Premium.</li>
+          <li><b>Apple Health e Health Connect:</b> de onde o app lê os dados do relógio, no próprio celular.</li>
+        </ul>
+        <p>Esses serviços tratam os dados só para prestar o serviço ao Level Fit.</p>
+
+        <h3>Por quanto tempo guardamos</h3>
+        <p>Guardamos seus dados enquanto sua conta existir.</p>
+        <ul>
+          <li>Ao excluir uma prova, a foto é apagada.</li>
+          <li>Ao bloquear alguém, suas provas naquele duelo são apagadas.</li>
+          <li>Ao excluir a conta, apagamos sua conta, suas provas e fotos e os duelos em que você joga sozinho.</li>
+        </ul>
+
+        <h3>Seus direitos</h3>
+        <p>Pela LGPD, você pode pedir:</p>
+        <ul>
+          <li>confirmação e acesso aos seus dados;</li>
+          <li>correção;</li>
+          <li>exclusão;</li>
+          <li>portabilidade;</li>
+          <li>informações sobre compartilhamento;</li>
+          <li>revogação do consentimento.</li>
+        </ul>
+        <p>Você corrige o perfil em Minha conta e exclui tudo em <b>Minha conta → Excluir minha conta</b>, a qualquer momento. Para os demais pedidos, escreva para <mark class="ph">[E-MAIL DE SUPORTE]</mark>.</p>
+
+        <h3>Segurança</h3>
+        <p>Usamos conexão criptografada, armazenamento privado para as fotos e regras de acesso que só deixam cada pessoa ver os duelos de que participa.</p>
+
+        <h3>Crianças</h3>
+        <p>O Level Fit não é destinado a menores de 13 anos.</p>
+
+        <h3>Mudanças nesta política</h3>
+        <p>Se a política mudar, atualizamos a data acima e avisamos no app quando a mudança for importante.</p>
+
+        <h3>Contato</h3>
+        <p>Controlador: <mark class="ph">[SEU NOME OU EMPRESA]</mark>. E-mail: <mark class="ph">[E-MAIL DE SUPORTE]</mark>.</p>
+      </div>
+
+      <hr class="sep">
+
+      <!-- ============================ SUPORTE ============================ -->
+      <div id="suporte">
+        <p class="kicker">Ajuda</p>
+        <h2>Suporte</h2>
+        <p>Achou um problema, tem uma sugestão ou precisa de ajuda com a assinatura? Escreva para <mark class="ph">[E-MAIL DE SUPORTE]</mark>. Respondemos em até 2 dias úteis.</p>
+        <h3>Perguntas rápidas</h3>
+        <p><b>Como cancelo o Premium?</b> Nos ajustes da sua conta da App Store ou do Google Play, em Assinaturas.</p>
+        <p><b>Troquei de celular. Perco meus duelos?</b> Não. Entre com o mesmo e-mail e use “Restaurar compras” se você for Premium.</p>
+        <p><b>Meu rival postou algo impróprio.</b> Abra a prova, toque em “Denunciar” e, se quiser, bloqueie o rival.</p>
+      </div>
+
+      <div id="excluir-conta" style="margin-top:36px">
+        <h3>Como excluir sua conta e seus dados</h3>
+        <div class="note">
+          <ol style="margin:0;padding-left:20px">
+            <li>Abra o Level Fit e entre na sua conta.</li>
+            <li>Vá em <b>Minha conta</b>.</li>
+            <li>Toque em <b>Excluir minha conta</b> e confirme.</li>
+          </ol>
+          <p style="margin:10px 0 0">Na hora, apagamos sua conta, perfil, provas, fotos e os duelos em que você joga sozinho. Se não conseguir acessar o app, peça a exclusão pelo e-mail <mark class="ph">[E-MAIL DE SUPORTE]</mark> usando o endereço da sua conta. Lembre-se de cancelar o Premium na loja, porque excluir a conta não cancela a assinatura.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 <mark class="ph">[SEU NOME OU EMPRESA]</mark> · Level Fit</span>
+    <span><a href="#termos">Termos de Uso</a> · <a href="#privacidade">Privacidade</a> · <a href="#suporte">Suporte</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

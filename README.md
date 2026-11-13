@@ -70,6 +70,19 @@ npx expo start --web
 ### Adicionando o widget
 Segure a tela inicial, toque em **Widgets** (Android) ou **+** (iOS) e escolha **Level Fit — Placar**.
 
+## Site, termos e privacidade
+
+[`docs/index.html`](docs/index.html) é a página pública do app: apresentação, **Termos de Uso** (`#termos`), **Política de Privacidade** (`#privacidade`), **Suporte** (`#suporte`) e **exclusão de conta** (`#excluir-conta`). Antes de publicar, troque os campos destacados em amarelo (`[SEU NOME OU EMPRESA]`, `[E-MAIL DE SUPORTE]`) e os links das lojas.
+
+Para publicar de graça: GitHub → Settings → Pages → *Deploy from a branch* → `main` / pasta `/docs`. Depois use as URLs no `.env` (`EXPO_PUBLIC_TERMS_URL`, `EXPO_PUBLIC_PRIVACY_POLICY_URL`) e nas lojas:
+
+| Campo na loja | URL |
+|---|---|
+| App Store: Privacy Policy URL · Google Play: Política de privacidade | `…/#privacidade` |
+| App Store: Support URL | `…/#suporte` |
+| App Store: EULA personalizado (opcional) | `…/#termos` |
+| Google Play: URL para excluir a conta | `…/#excluir-conta` |
+
 ## Scripts
 
 ```bash
