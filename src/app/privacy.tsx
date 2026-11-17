@@ -11,7 +11,8 @@ export default function PrivacyScreen() {
     <Screen edges={['top', 'bottom']}>
       <Row style={{ justifyContent: 'space-between' }}>
         <Txt variant="title">Privacidade</Txt>
-        <Pressable onPress={() => router.back()} hitSlop={12}>
+        {/* Aberta direto pelo Health Connect não há tela anterior: volta para o início. */}
+        <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} hitSlop={12}>
           <Txt variant="dim">✕ Fechar</Txt>
         </Pressable>
       </Row>

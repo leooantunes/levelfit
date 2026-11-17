@@ -63,6 +63,9 @@
         "android.permission.health.READ_EXERCISE",
         "android.permission.health.READ_SLEEP",
         "android.permission.health.READ_MINDFULNESS"
+      ],
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW"
       ]
     },
     "web": {
@@ -90,6 +93,7 @@
       [
         "expo-notifications",
         {
+          "icon": "./assets/images/android-icon-monochrome.png",
           "color": "#F26B1D"
         }
       ],
@@ -133,6 +137,7 @@
         }
       ],
       "react-native-health-connect",
+      "./plugins/withHealthRationale",
       [
         "expo-build-properties",
         {
