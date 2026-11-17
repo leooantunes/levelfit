@@ -89,10 +89,12 @@ type GameState = {
   blockRival: (duelId: string) => Promise<void>;
   updateDuel: (patch: DuelPatch) => Promise<void>;
 
+  /** Posta a prova no duelo aberto, ou no `duelId` informado (mesma foto em vários duelos). */
   addCheckin: (
     habitId: string,
     photoUri: string,
     note?: string,
+    duelId?: string,
   ) => Promise<Checkin>;
   deleteCheckin: (id: string) => Promise<void>;
   react: (checkinId: string, emoji: string | null) => Promise<void>;
@@ -114,7 +116,12 @@ type GameState = {
   syncPlanFromStore: () => Promise<void>;
 };
 
-const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
+/** Erros do Supabase (Postgrest/Storage) chegam como objetos simples com `message`. */
+const errorText = (e: unknown): string => {
+  if (e instanceof Error) return e.message;
+  if (e && typeof e === "object" && "message" in e && typeof e.message === "string") return e.message;
+  return String(e);
+};
 const byNewest = (a: { createdAt: string }, b: { createdAt: string }) =>
   b.createdAt.localeCompare(a.createdAt);
 
@@ -458,8 +465,10 @@ export const useGame = create<GameState>()(
             .catch((e) => set({ syncError: errorText(e) }));
         },
 
-        async addCheckin(habitId, photoUri, note) {
-          const duel = activeDuel();
+        async addCheckin(habitId, photoUri, note, duelId) {
+          const target = duelId ? get().duels[duelId] : undefined;
+          if (duelId && !target) throw new Error("Duelo não encontrado.");
+          const duel = target ?? activeDuel();
           const { account } = get();
           if (!account) throw new Error("Entre na sua conta primeiro.");
           const id = randomUUID();

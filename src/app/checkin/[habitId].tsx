@@ -12,10 +12,35 @@ import { C, R, S } from '@/constants/theme';
 import { formatTime } from '@/domain/dates';
 import { CHALLENGE_MULTIPLIER, dailyChallenge, getHabit } from '@/domain/habits';
 import { formatHealthValue, HEALTH_GOALS } from '@/domain/healthGoals';
+import type { Checkin, Duel, Habit } from '@/domain/types';
 import { usePlayers, useToday } from '@/hooks/useScoreBook';
 import { HEALTH_SOURCE, SUPPORTED_METRICS } from '@/lib/health';
 import { pickProofPhoto, takeProofPhoto } from '@/lib/photos';
 import { useActiveCheckins, useActiveDuel, useGame } from '@/store/useGame';
+
+/** Outros duelos meus com esta mesma meta (fixa ou desafio do dia) ainda aberta hoje. */
+function duelsSharingGoal(args: {
+  duelOrder: string[];
+  duels: Record<string, Duel>;
+  checkins: Record<string, Checkin[]>;
+  currentId: string;
+  myId: string;
+  habit: Habit;
+  today: string;
+}): Duel[] {
+  const { duelOrder, duels, checkins, currentId, myId, habit, today } = args;
+  return duelOrder
+    .map((id) => duels[id])
+    .filter((d): d is Duel => {
+      if (!d || d.id === currentId || !d.players.some((p) => p.id === myId)) return false;
+      const hasHabit = d.habitIds.includes(habit.id) || dailyChallenge(d.id, today, d.habitIds).id === habit.id;
+      if (!hasHabit) return false;
+      const done = (checkins[d.id] ?? []).filter(
+        (c) => c.dateKey === today && c.habitId === habit.id && c.playerId === myId && !c.disputed,
+      ).length;
+      return done < habit.maxPerDay;
+    });
+}
 
 export default function CheckinScreen() {
   const { habitId } = useLocalSearchParams<{ habitId: string }>();
@@ -32,8 +57,17 @@ export default function CheckinScreen() {
   const healthEnabled = useGame((s) => s.healthEnabled);
   const enableHealth = useGame((s) => s.enableHealth);
   const [connecting, setConnecting] = useState(false);
+  const [sharedCount, setSharedCount] = useState(0);
+  const myId = useGame((s) => s.account?.id);
+  const duels = useGame((s) => s.duels);
+  const duelOrder = useGame((s) => s.duelOrder);
+  const allCheckins = useGame((s) => s.checkins);
 
   if (!habit || !duel || !me) return null;
+
+  const otherDuels = myId
+    ? duelsSharingGoal({ duelOrder, duels, checkins: allCheckins, currentId: duel.id, myId, habit, today })
+    : [];
 
   const goal = HEALTH_GOALS[habit.id];
   const healthGoal = HEALTH_SOURCE && goal && SUPPORTED_METRICS.includes(goal.metric) ? goal : null;
@@ -67,11 +101,18 @@ export default function CheckinScreen() {
     }
   };
 
-  const submit = async () => {
+  const post = async (extraDuelIds: string[]) => {
     if (!photo) return;
     setSaving(true);
     try {
       await addCheckin(habit.id, photo, note);
+      // Uma falha em outro duelo não desfaz a prova deste.
+      const results = await Promise.allSettled(extraDuelIds.map((id) => addCheckin(habit.id, photo, note, id)));
+      const shared = results.filter((r) => r.status === 'fulfilled').length;
+      setSharedCount(shared);
+      if (shared < extraDuelIds.length) {
+        Alert.alert('Quase lá', 'A prova entrou neste duelo, mas não deu para postar em todos os outros.');
+      }
       haptic('success');
       setSuccess(true);
       setTimeout(() => router.back(), 1600);
@@ -79,6 +120,24 @@ export default function CheckinScreen() {
       Alert.alert('Não foi possível salvar', e instanceof Error ? e.message : String(e));
       setSaving(false);
     }
+  };
+
+  const submit = () => {
+    if (!photo) return;
+    if (otherDuels.length === 0) {
+      void post([]);
+      return;
+    }
+    const names = otherDuels.map((d) => `• ${d.name}`).join('\n');
+    Alert.alert(
+      'Usar a foto em outros duelos?',
+      `"${habit.title}" também é meta hoje em:\n${names}\n\nQuer que esta prova valha em todos ou só em "${duel.name}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Só neste duelo', onPress: () => post([]) },
+        { text: `Em todos (${otherDuels.length + 1})`, onPress: () => post(otherDuels.map((d) => d.id)) },
+      ],
+    );
   };
 
   return (
@@ -220,6 +279,9 @@ export default function CheckinScreen() {
               +{pts} pts!
             </Txt>
             <Txt variant="h3">Golpe certeiro! Prova registrada 🥊</Txt>
+            {sharedCount > 0 ? (
+              <Txt variant="dim">{`Valendo também em ${sharedCount} ${sharedCount === 1 ? 'outro duelo' : 'outros duelos'}`}</Txt>
+            ) : null}
           </Animated.View>
         </Animated.View>
       ) : null}

@@ -44,7 +44,7 @@ export function StoryCard({
         <View style={[styles.glow, { backgroundColor: (winner?.color ?? C.gold) + '55' }]} />
         <Txt style={{ fontSize: 96, lineHeight: 116 }}>{winner ? TROPHY[period] : tie ? '🤝' : '😴'}</Txt>
         <Txt variant="label" color={C.gold}>
-          CAMPEÃO {PERIOD_NAME[period]}
+          {winner ? 'CAMPEÃO' : 'EMPATE'} {PERIOD_NAME[period]}
         </Txt>
         <Txt variant="title" color={C.nightText} style={styles.headline} numberOfLines={2}>
           {headline}
@@ -71,7 +71,7 @@ export function StoryCard({
         ))}
       </View>
 
-      {winner && loser && stake ? (
+      {winner && loser && stake && period !== 'day' ? (
         <View style={styles.stake}>
           <Txt variant="small" color={C.ink} style={{ textAlign: 'center' }}>
             💸 {loser.name} paga: {stake}

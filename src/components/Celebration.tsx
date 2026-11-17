@@ -62,8 +62,8 @@ export function Celebration({
 
   if (!result) return null;
   const { winner, tie, standings, period, label } = result;
-  // Story só para semana e mês (o round diário é rápido demais para virar post).
-  const canShare = period !== 'day' && Platform.OS !== 'web' && (!!winner || tie);
+  // Story para qualquer período (round, semana e mês) com vencedor ou empate.
+  const canShare = Platform.OS !== 'web' && (!!winner || tie);
 
   const share = async () => {
     setSharing(true);
@@ -140,7 +140,13 @@ export function Celebration({
 
           <Animated.View entering={FadeInUp.delay(1300)} style={{ alignSelf: 'stretch', gap: S.md }}>
             {canShare ? (
-              <Button title="Postar no Story" icon="📸" variant="secondary" loading={sharing} onPress={share} />
+              <Button
+                title={viewerWon ? 'Postar vitória no Instagram' : 'Postar no Story do Instagram'}
+                icon="📸"
+                variant="secondary"
+                loading={sharing}
+                onPress={share}
+              />
             ) : null}
             <Button title={viewerWon ? 'Defender o cinturão 🥊' : 'Quero revanche! 🔥'} onPress={onClose} />
           </Animated.View>
