@@ -44,3 +44,6 @@ example
 
 # env com chaves do Supabase
 .env
+
+# Supabase CLI (cache local)
+supabase/.temp/
