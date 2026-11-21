@@ -1,12 +1,22 @@
 import { router } from 'expo-router';
 import { Alert, Linking, Platform } from 'react-native';
 
-/** Política de privacidade publicada (a mesma URL vai no App Store Connect). */
-export const PRIVACY_POLICY_URL = process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL || null;
+/** Site da SideQuest Studio, empresa que publica o Level Fit. */
+export const COMPANY_NAME = 'SideQuest Studio';
+export const COMPANY_URL = 'https://sidequeststud-io.netlify.app';
+
+/** Página do Level Fit no site da empresa. */
+export const APP_SITE_URL = `${COMPANY_URL}/apps/levelfit`;
+
+/** Política de privacidade publicada no site (a mesma URL vai na App Store e no Google Play). */
+export const PRIVACY_POLICY_URL = process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL || `${APP_SITE_URL}/privacidade`;
+
+/** Como excluir a conta sem o app (o Google Play exige essa URL). */
+export const ACCOUNT_DELETION_URL = `${APP_SITE_URL}/excluir-conta`;
 
 /**
- * Termos de uso publicados (docs/index.html#termos).
- * Sem URL configurada, usa os termos padrão da loja (EULA da Apple / termos do Google Play).
+ * Termos de uso. O site ainda não tem página de termos: sem `EXPO_PUBLIC_TERMS_URL`,
+ * usa os termos padrão da loja (EULA da Apple / termos do Google Play).
  */
 export const TERMS_URL =
   process.env.EXPO_PUBLIC_TERMS_URL ||
@@ -18,16 +28,17 @@ export function openTerms() {
   Linking.openURL(TERMS_URL).catch(() => {});
 }
 
-/** E-mail de suporte mostrado no app (a App Store exige um contato). */
-export const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || null;
+/** Abre o site da empresa. */
+export function openCompanySite() {
+  Linking.openURL(COMPANY_URL).catch(() => {});
+}
 
-/** Abre a política publicada; sem URL configurada, mostra a versão que vem no app. */
+/** E-mail de suporte mostrado no app (a App Store exige um contato). */
+export const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'contato@sidequest.studio';
+
+/** Abre a política no site da empresa; se não conseguir abrir o navegador, mostra a cópia que vem no app. */
 export function openPrivacyPolicy() {
-  if (PRIVACY_POLICY_URL) {
-    Linking.openURL(PRIVACY_POLICY_URL).catch(() => router.push('/privacy'));
-  } else {
-    router.push('/privacy');
-  }
+  Linking.openURL(PRIVACY_POLICY_URL).catch(() => router.push('/privacy'));
 }
 
 export async function contactSupport(subject = 'Ajuda com o Level Fit') {

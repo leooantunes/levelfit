@@ -1,6 +1,7 @@
 /**
- * Política de privacidade do Level Fit. A mesma versão está em docs/privacy-policy.md
- * para publicar numa URL pública (exigida no App Store Connect). Mudou aqui, mude lá.
+ * Cópia da política de privacidade que vem dentro do app, usada só quando não dá para abrir
+ * a versão oficial no site da SideQuest Studio (PRIVACY_POLICY_URL em src/lib/links.ts).
+ * Mantenha o conteúdo em linha com a página do site.
  */
 export const PRIVACY_UPDATED_AT = '11 de novembro de 2026';
 

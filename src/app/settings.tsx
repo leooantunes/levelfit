@@ -8,7 +8,7 @@ import { C, R } from '@/constants/theme';
 import { getHabit } from '@/domain/habits';
 import { formatHealthValue, HEALTH_GOALS } from '@/domain/healthGoals';
 import { HEALTH_SOURCE, openHealthSettings, SUPPORTED_METRICS } from '@/lib/health';
-import { contactSupport, openPrivacyPolicy, SUPPORT_EMAIL } from '@/lib/links';
+import { COMPANY_NAME, contactSupport, openCompanySite, openPrivacyPolicy, SUPPORT_EMAIL } from '@/lib/links';
 import { FREE_DUEL_LIMIT, openManageSubscriptions } from '@/lib/premium';
 import { useGame } from '@/store/useGame';
 import { api, type BlockedPlayer } from '@/sync/supabase';
@@ -300,12 +300,12 @@ export default function SettingsScreen() {
       <Card>
         <Txt variant="h3">Privacidade e ajuda</Txt>
         <Button title="Política de privacidade" icon="🔒" variant="secondary" onPress={openPrivacyPolicy} />
-        {SUPPORT_EMAIL ? (
-          <>
-            <Button title="Fale com a gente" icon="✉️" variant="secondary" onPress={() => contactSupport()} />
-            <Txt variant="small">Dúvidas, problemas ou denúncias: {SUPPORT_EMAIL}</Txt>
-          </>
-        ) : null}
+        <Button title="Fale com a gente" icon="✉️" variant="secondary" onPress={() => contactSupport()} />
+        <Txt variant="small">Dúvidas, problemas ou denúncias: {SUPPORT_EMAIL}</Txt>
+        <Button title={COMPANY_NAME} icon="🌐" variant="ghost" onPress={openCompanySite} />
+        <Txt variant="small" style={{ textAlign: 'center' }}>
+          O Level Fit é um app da {COMPANY_NAME}.
+        </Txt>
       </Card>
 
       <Button title="Sair da conta" variant="ghost" onPress={logout} />

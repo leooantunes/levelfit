@@ -70,18 +70,27 @@ npx expo start --web
 ### Adicionando o widget
 Segure a tela inicial, toque em **Widgets** (Android) ou **+** (iOS) e escolha **Level Fit — Placar**.
 
-## Site, termos e privacidade
+## Site, privacidade e suporte
 
-[`docs/index.html`](docs/index.html) é a página pública do app: apresentação, **Termos de Uso** (`#termos`), **Política de Privacidade** (`#privacidade`), **Suporte** (`#suporte`) e **exclusão de conta** (`#excluir-conta`). Antes de publicar, troque os campos destacados em amarelo (`[SEU NOME OU EMPRESA]`, `[E-MAIL DE SUPORTE]`) e os links das lojas.
+O Level Fit é publicado pela **SideQuest Studio**. O app aponta para o site da empresa (links em [`src/lib/links.ts`](src/lib/links.ts)):
 
-Para publicar de graça: GitHub → Settings → Pages → *Deploy from a branch* → `main` / pasta `/docs`. Depois use as URLs no `.env` (`EXPO_PUBLIC_TERMS_URL`, `EXPO_PUBLIC_PRIVACY_POLICY_URL`) e nas lojas:
-
-| Campo na loja | URL |
+| Uso | URL |
 |---|---|
-| App Store: Privacy Policy URL · Google Play: Política de privacidade | `…/#privacidade` |
-| App Store: Support URL | `…/#suporte` |
-| App Store: EULA personalizado (opcional) | `…/#termos` |
-| Google Play: URL para excluir a conta | `…/#excluir-conta` |
+| Site da empresa (Minha conta) | https://sidequeststud-io.netlify.app |
+| Página do app | https://sidequeststud-io.netlify.app/apps/levelfit |
+| Política de privacidade (cadastro, Premium, Minha conta) | https://sidequeststud-io.netlify.app/apps/levelfit/privacidade |
+| Exclusão de conta sem o app | https://sidequeststud-io.netlify.app/apps/levelfit/excluir-conta |
+| Contato | contato@sidequest.studio |
+
+Nas lojas, use:
+
+| Campo | URL |
+|---|---|
+| App Store: Privacy Policy URL · Google Play: Política de privacidade | `/apps/levelfit/privacidade` |
+| App Store: Support URL · Marketing URL | `/apps/levelfit` |
+| Google Play: URL para excluir a conta | `/apps/levelfit/excluir-conta` |
+
+O site ainda não tem termos de uso, então o link "Termos de uso" abre o EULA padrão da Apple / termos do Google Play. Quando houver uma página, defina `EXPO_PUBLIC_TERMS_URL`.
 
 ## Scripts
 
@@ -129,7 +138,7 @@ supabase/schema.sql    banco, RLS, funções e storage
 - **Bloquear** (aba Perfil do duelo → Bloquear, ou depois de denunciar uma prova) chama a RPC `block_player`: guarda o bloqueio na tabela `blocks`, apaga as provas de quem bloqueou naquele duelo e tira a pessoa dele. `join_duel` recusa juntar duas pessoas que se bloquearam. A lista e o desbloqueio ficam em Minha conta.
 - **Relógio** (Minha conta → ⌚ Relógio): lê o Apple Health (iOS, [`health.ios.ts`](src/lib/health.ios.ts)) ou o Health Connect (Android, [`health.android.ts`](src/lib/health.android.ts)). Ao abrir o app, confere hoje e ontem; meta batida vira prova automática sem foto (coluna `health`), uma por duelo/meta/dia (id determinístico), e o rival pode contestar. Metas e alvos em [`healthGoals.ts`](src/domain/healthGoals.ts): 10 mil passos, 30 min de treino, 7h de sono, 10 min de meditação e 20 min ao ar livre (só Apple Watch). Dados digitados à mão no app de saúde não contam. Precisa de build nativo novo (não roda no Expo Go). Na Play Store, os dados de saúde exigem a declaração de Health Connect no Play Console.
 - **Story do Instagram:** na comemoração da semana e do mês, "Postar no Story" gera uma arte 1080x1920 ([`StoryCard.tsx`](src/components/StoryCard.tsx)) com `react-native-view-shot` e abre o editor de Stories do Instagram via `react-native-share`. Exige `EXPO_PUBLIC_FACEBOOK_APP_ID` (regra da Meta); sem ele, ou sem Instagram instalado, abre o menu de compartilhar do celular.
-- **Privacidade e suporte:** a política está em [`src/lib/privacyPolicy.ts`](src/lib/privacyPolicy.ts) (tela `/privacy`) e em [`docs/privacy-policy.md`](docs/privacy-policy.md) para publicar numa URL pública. Com `EXPO_PUBLIC_PRIVACY_POLICY_URL` definida, os links abrem a página publicada; sem ela, abrem a tela do app. `EXPO_PUBLIC_SUPPORT_EMAIL` mostra o contato em Minha conta e na política.
+- **Privacidade e suporte:** os links abrem a política no site da SideQuest Studio. Se o navegador não abrir, o app mostra a cópia em [`src/lib/privacyPolicy.ts`](src/lib/privacyPolicy.ts) (tela `/privacy`). O contato padrão é contato@sidequest.studio.
 
 ## Premium (Level Fit Pro)
 
