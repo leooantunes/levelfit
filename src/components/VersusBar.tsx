@@ -14,13 +14,17 @@ export function VersusBar({
   leftPoints,
   rightPoints,
   caption,
+  proIds = [],
 }: {
   left: Player;
   right: Player | null;
   leftPoints: number;
   rightPoints: number;
   caption?: string;
+  /** Jogadores Premium: ganham a coroa ao lado do nome. */
+  proIds?: string[];
 }) {
+  const crown = (p: Player | null) => (p && proIds.includes(p.id) ? ' 👑' : '');
   const total = leftPoints + rightPoints;
   const share = total === 0 ? 0.5 : leftPoints / total;
   const sv = useSharedValue(0.5);
@@ -39,6 +43,7 @@ export function VersusBar({
           <View>
             <Txt variant="h3" numberOfLines={1}>
               {left.name}
+              {crown(left)}
             </Txt>
             <Txt variant="number" color={left.color}>
               {leftPoints}
@@ -51,7 +56,7 @@ export function VersusBar({
         <View style={[styles.side, { justifyContent: 'flex-end' }]}>
           <View style={{ alignItems: 'flex-end' }}>
             <Txt variant="h3" numberOfLines={1}>
-              {right?.name ?? 'Aguardando…'}
+              {right ? `${right.name}${crown(right)}` : 'Aguardando…'}
             </Txt>
             <Txt variant="number" color={rightColor}>
               {right ? rightPoints : '–'}

@@ -2,12 +2,13 @@ import { router } from 'expo-router';
 import { Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
+import { GroupBoard } from '@/components/GroupBoard';
 import { HabitCard } from '@/components/HabitCard';
 import { Card, Chip, ProgressBar, Row, Screen, Txt } from '@/components/ui';
 import { VersusBar } from '@/components/VersusBar';
 import { C, R, S } from '@/constants/theme';
 import { addDays, daysBetween, periodLabel, toDateKey } from '@/domain/dates';
-import { dailyChallenge, getHabit } from '@/domain/habits';
+import { dailyChallenge, duelGoals } from '@/domain/habits';
 import { PERFECT_DAY_BONUS, streakMultiplier } from '@/domain/scoring';
 import { usePlayers, useScoreBook, useToday } from '@/hooks/useScoreBook';
 import { useActiveCheckins, useActiveDuel, useGame } from '@/store/useGame';
@@ -29,12 +30,16 @@ export default function TodayScreen() {
   const refreshDuel = useGame((s) => s.refreshDuel);
   const book = useScoreBook();
   const today = useToday();
-  const { me, opponent } = usePlayers();
+  const { me, opponent: firstRival } = usePlayers();
   if (!duel || !book || !me) return null;
 
+  const group = (duel.maxPlayers ?? 2) > 2 || duel.players.length > 2;
+  const todayStandings = book.standings('day', today);
+  // Em grupo, o "rival" dos cartões de meta é quem está mais bem colocado entre os outros.
+  const opponent = group ? (todayStandings.find((s) => s.player.id !== me.id)?.player ?? null) : firstRival;
   const myDay = book.day(me.id, today);
   const oppDay = opponent ? book.day(opponent.id, today) : null;
-  const goals = duel.habitIds.map(getHabit).filter((h) => !!h);
+  const goals = duelGoals(duel);
   const challenge = dailyChallenge(duel.id, today, duel.habitIds);
   const done = goals.filter((h) => (myDay.counts[h.id] ?? 0) >= h.maxPerDay).length;
   const streak = book.currentStreak(me.id, today);
@@ -67,13 +72,18 @@ export default function TodayScreen() {
       </Row>
 
       <Card>
+        {group ? (
+          <GroupBoard duel={duel} standings={todayStandings} myId={me.id} />
+        ) : (
         <VersusBar
           left={me}
           right={opponent}
           leftPoints={myDay.total}
           rightPoints={oppDay?.total ?? 0}
+          proIds={duel.proPlayerIds}
           caption={opponent ? taunt(myDay.total - (oppDay?.total ?? 0), opponent.name, done, goals.length) : `Convide seu rival com o código ${duel.code}`}
         />
+        )}
       </Card>
 
       <Animated.View entering={FadeIn}>
@@ -134,7 +144,7 @@ export default function TodayScreen() {
 
       <View style={styles.tip}>
         <Txt variant="small">
-          Toque em uma meta para postar a foto de prova. Seu rival pode reagir ou contestar a prova — prova contestada não pontua.
+          Toque em uma meta para postar a foto de prova. Os rivais podem reagir ou contestar a prova — prova contestada não pontua.
         </Txt>
       </View>
     </Screen>

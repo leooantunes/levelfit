@@ -1,5 +1,5 @@
 import { addDays, periodEnd, periodKey, periodLabel, todayKey, toDateKey } from './dates';
-import { CHALLENGE_MULTIPLIER, dailyChallenge, getHabit } from './habits';
+import { CHALLENGE_MULTIPLIER, dailyChallenge, duelGoals, habitFor } from './habits';
 import type { Checkin, Duel, Period, PeriodResult, Player, Standing } from './types';
 
 export const PERFECT_DAY_BONUS = 30;
@@ -97,7 +97,7 @@ export class ScoreBook {
     const cached = this.dayCache.get(cacheKey);
     if (cached) return cached;
 
-    const goals = this.duel.habitIds;
+    const goals = duelGoals(this.duel).map((h) => h.id);
     const challenge = dailyChallenge(this.duel.id, dateKey, goals);
     const raw: Record<string, number> = {};
     for (const c of this.checkinsOn(playerId, dateKey)) raw[c.habitId] = (raw[c.habitId] ?? 0) + 1;
@@ -105,7 +105,7 @@ export class ScoreBook {
     let base = 0;
     const counts: Record<string, number> = {};
     for (const [habitId, n] of Object.entries(raw)) {
-      const habit = getHabit(habitId);
+      const habit = habitFor(this.duel, habitId);
       if (!habit) continue;
       const isGoal = goals.includes(habitId);
       const isChallenge = habitId === challenge.id;
@@ -117,7 +117,7 @@ export class ScoreBook {
 
     const perfect =
       goals.length > 0 &&
-      goals.every((id) => (counts[id] ?? 0) >= (getHabit(id)?.maxPerDay ?? 1));
+      goals.every((id) => (counts[id] ?? 0) >= (habitFor(this.duel, id)?.maxPerDay ?? 1));
     // O combo usa a sequência até o dia anterior: entrar hoje não infla o próprio dia.
     const multiplier = base > 0 ? streakMultiplier(this.streakEndingAt(playerId, addDays(dateKey, -1)) + 1) : 1;
     const total = Math.round(base * multiplier) + (perfect ? PERFECT_DAY_BONUS : 0);

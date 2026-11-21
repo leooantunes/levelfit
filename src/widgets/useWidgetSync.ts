@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react';
 import { Platform } from 'react-native';
 
 import { periodKey } from '@/domain/dates';
-import { getHabit } from '@/domain/habits';
+import { duelGoals } from '@/domain/habits';
 import { leaderOf, ScoreBook } from '@/domain/scoring';
 import type { Checkin } from '@/domain/types';
 import { useToday } from '@/hooks/useScoreBook';
@@ -30,11 +30,15 @@ export function useWidgetSync() {
         DuelWidget.updateSnapshot(EMPTY_WIDGET_PROPS);
         return;
       }
-      const opp = duel.players.find((p) => p.id !== me.id);
+      // Em grupo, compara com o rival mais bem colocado do dia.
+      const opp =
+        duel.players.length > 2
+          ? book.standings('day', today).find((x) => x.player.id !== me.id)?.player
+          : duel.players.find((p) => p.id !== me.id);
       const myDay = book.day(me.id, today);
       const mePoints = myDay.total;
       const oppPoints = opp ? book.day(opp.id, today).total : 0;
-      const done = duel.habitIds.filter((id) => (myDay.counts[id] ?? 0) >= (getHabit(id)?.maxPerDay ?? 1)).length;
+      const done = duelGoals(duel).filter((h) => (myDay.counts[h.id] ?? 0) >= h.maxPerDay).length;
       const diff = mePoints - oppPoints;
       const status = !opp
         ? `Código: ${duel.code}`

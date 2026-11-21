@@ -39,6 +39,10 @@ export const C = {
 export const PLAYER_COLORS = ['#E2412F', '#2F7DD1', '#F26B1D', '#3FAE5A', '#8E44AD', '#F7B928'];
 export const AVATARS = ['🦁', '🐯', '🦊', '🐺', '🐼', '🐸', '🦄', '🐙', '🦖', '🐵', '🦅', '🐻'];
 
+/** Cosméticos exclusivos do Premium. */
+export const PREMIUM_AVATARS = ['🥷', '🤖', '🐉', '🦈', '🦍', '👽', '🧛', '🦸', '🐲', '🦂'];
+export const PREMIUM_COLORS = ['#C9A227', '#111111', '#00B3A4', '#FF4F9A', '#5B4BFF', '#7A4630'];
+
 export const S = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
 export const R = { sm: 10, md: 16, lg: 22, pill: 999 } as const;
 

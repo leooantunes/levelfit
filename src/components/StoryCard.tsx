@@ -31,7 +31,8 @@ export function StoryCard({
   ref: Ref<StoryCardRef>;
 }) {
   const { winner, tie, standings, period, label } = result;
-  const loser = winner ? standings.find((s) => s.player.id !== winner.id)?.player : null;
+  // Em grupo, quem paga a aposta é o último colocado.
+  const loser = winner && standings.length > 1 ? standings[standings.length - 1].player : null;
   let headline = 'NINGUÉM LUTOU';
   if (winner) headline = `${winner.name.toUpperCase()} VENCEU!`;
   else if (tie) headline = 'EMPATE NO RINGUE!';

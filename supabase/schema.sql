@@ -7,7 +7,7 @@
 -- 4. Copie a URL e a publishable key para o .env (veja .env.example)
 --
 -- Cada conta pode participar de vários duelos (1 linha em duel_players por duelo).
--- Cada duelo tem no máximo 2 jogadores.
+-- Cada duelo tem 2 jogadores, ou de 3 a 6 nos duelos em grupo (Premium, migração "premium_perks").
 
 -- ---------------------------------------------------------------------------
 -- Tabelas
@@ -443,3 +443,211 @@ alter table public.checkins add constraint checkins_proof_present check (
       and jsonb_typeof(health -> 'value') = 'number'
       and char_length(health::text) <= 300)
 );
+
+-- ---------------------------------------------------------------------------
+-- Recursos Premium (migração "premium_perks")
+--
+-- 1. Duelos em grupo: duels.max_players (2 a 6). Mais de 2 exige Premium de quem cria.
+-- 2. Metas personalizadas: duels.custom_habits (jsonb). Só em duelo "Pro".
+-- 3. Premium dupla: um duelo é "Pro" quando algum jogador tem Premium. Entrar num
+--    duelo Pro não conta no limite do plano grátis, e todos ali ganham os extras.
+-- 4. Bloqueio em grupo: block_player recebe o jogador a bloquear.
+-- O app funciona com o banco antigo: só usa os campos novos quando existem.
+-- ---------------------------------------------------------------------------
+
+alter table public.duels add column if not exists max_players int not null default 2;
+alter table public.duels drop constraint if exists duels_max_players_range;
+alter table public.duels add constraint duels_max_players_range check (max_players between 2 and 6);
+
+alter table public.duels add column if not exists custom_habits jsonb not null default '[]'::jsonb;
+alter table public.duels drop constraint if exists duels_custom_habits_shape;
+alter table public.duels add constraint duels_custom_habits_shape check (
+  jsonb_typeof(custom_habits) = 'array'
+  and jsonb_array_length(custom_habits) <= 10
+  and char_length(custom_habits::text) <= 4000
+);
+
+-- Duelo Pro = tem pelo menos um jogador com Premium ativo.
+create or replace function private.duel_is_pro(d uuid) returns boolean
+language sql security definer stable set search_path = '' as $$
+  select exists (
+    select 1 from public.duel_players dp
+    where dp.duel_id = d and private.is_premium(dp.player_id)
+  );
+$$;
+revoke all on function private.duel_is_pro(uuid) from public, anon, authenticated;
+
+-- Jogadores com Premium nos duelos da pessoa (selo Pro e extras do duelo).
+-- Só revela "tem Premium ou não" de quem divide um duelo com você.
+create or replace function public.my_duels_pro_members()
+returns table (duel_id uuid, player_id uuid)
+language sql security definer stable set search_path = '' as $$
+  select dp.duel_id, dp.player_id
+    from public.duel_players dp
+   where private.is_member(dp.duel_id)
+     and private.is_premium(dp.player_id);
+$$;
+revoke all on function public.my_duels_pro_members() from public, anon;
+grant execute on function public.my_duels_pro_members() to authenticated;
+
+-- Limite do plano grátis: 1 duelo "comum" por vez. Duelos Pro (de quem assina) não contam.
+drop function if exists private.assert_can_add_duel();
+create or replace function private.assert_can_add_duel(p_duel uuid default null) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if private.is_premium((select auth.uid())) then return; end if;
+  if p_duel is not null and private.duel_is_pro(p_duel) then return; end if;
+  if (select count(*) from public.duel_players dp
+       where dp.player_id = (select auth.uid()) and not private.duel_is_pro(dp.duel_id)) >= 1 then
+    raise exception 'premium_required: O plano grátis permite 1 duelo por vez. Assine o Premium para ter mais.'
+      using errcode = 'P0001';
+  end if;
+end;
+$$;
+revoke all on function private.assert_can_add_duel(uuid) from public, anon, authenticated;
+
+-- Valida as metas personalizadas: [{id, title, emoji, points}].
+create or replace function private.valid_custom_habits(h jsonb) returns boolean
+language sql immutable set search_path = '' as $$
+  select jsonb_typeof(h) = 'array' and not exists (
+    select 1 from jsonb_array_elements(h) x
+    where not (
+      jsonb_typeof(x) = 'object'
+      and x ->> 'id' ~ '^custom-[a-z0-9]{6,12}$'
+      and char_length(coalesce(x ->> 'title', '')) between 1 and 40
+      and char_length(coalesce(x ->> 'emoji', '')) between 1 and 16
+      and jsonb_typeof(x -> 'points') = 'number'
+      and (x ->> 'points')::numeric between 5 and 30
+    )
+  );
+$$;
+
+drop function if exists public.create_duel(text, text[], text, text, text, text);
+create or replace function public.create_duel(
+  p_name text, p_habit_ids text[], p_stake text, p_player_name text, p_avatar text, p_color text,
+  p_max_players int default 2, p_custom_habits jsonb default '[]'::jsonb
+) returns public.duels language plpgsql security definer set search_path = '' as $$
+declare
+  v_duel public.duels;
+  v_code text;
+begin
+  if (select auth.uid()) is null then raise exception 'Não autenticado'; end if;
+  if p_max_players is null or p_max_players < 2 or p_max_players > 6 then
+    raise exception 'Um duelo tem de 2 a 6 jogadores.';
+  end if;
+  if not private.valid_custom_habits(coalesce(p_custom_habits, '[]'::jsonb)) then
+    raise exception 'Meta personalizada inválida.';
+  end if;
+  if (p_max_players > 2 or jsonb_array_length(coalesce(p_custom_habits, '[]'::jsonb)) > 0)
+     and not private.is_premium((select auth.uid())) then
+    raise exception 'premium_required: Duelos em grupo e metas personalizadas são do Premium.'
+      using errcode = 'P0001';
+  end if;
+  perform private.assert_can_add_duel();
+  loop
+    v_code := upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 6));
+    exit when not exists (select 1 from public.duels where code = v_code);
+  end loop;
+  insert into public.duels (code, name, habit_ids, stake, max_players, custom_habits)
+    values (v_code, p_name, p_habit_ids, p_stake, p_max_players, coalesce(p_custom_habits, '[]'::jsonb))
+    returning * into v_duel;
+  insert into public.duel_players (duel_id, player_id, name, avatar, color)
+    values (v_duel.id, (select auth.uid()), p_player_name, p_avatar, p_color);
+  return v_duel;
+end;
+$$;
+revoke all on function public.create_duel(text, text[], text, text, text, text, int, jsonb) from public, anon;
+grant execute on function public.create_duel(text, text[], text, text, text, text, int, jsonb) to authenticated;
+
+create or replace function public.join_duel(
+  p_code text, p_player_name text, p_avatar text, p_color text
+) returns public.duels language plpgsql security definer set search_path = '' as $$
+declare
+  v_duel public.duels;
+  v_count int;
+begin
+  if (select auth.uid()) is null then raise exception 'Não autenticado'; end if;
+  select * into v_duel from public.duels where code = upper(trim(p_code)) for update;
+  if v_duel.id is null then raise exception 'Código inválido'; end if;
+  if exists (select 1 from public.duel_players where duel_id = v_duel.id and player_id = (select auth.uid())) then
+    return v_duel;
+  end if;
+  select count(*) into v_count from public.duel_players where duel_id = v_duel.id;
+  if v_count >= v_duel.max_players then
+    raise exception 'Este duelo já está completo (% jogadores).', v_duel.max_players;
+  end if;
+  -- Mensagem neutra: não revela quem bloqueou quem.
+  if exists (
+    select 1 from public.duel_players dp join public.blocks b
+      on (b.blocker_id = (select auth.uid()) and b.blocked_id = dp.player_id)
+      or (b.blocker_id = dp.player_id and b.blocked_id = (select auth.uid()))
+    where dp.duel_id = v_duel.id
+  ) then
+    raise exception 'Não foi possível entrar neste duelo.';
+  end if;
+  perform private.assert_can_add_duel(v_duel.id);
+  insert into public.duel_players (duel_id, player_id, name, avatar, color)
+    values (v_duel.id, (select auth.uid()), p_player_name, p_avatar, p_color);
+  return v_duel;
+end;
+$$;
+revoke all on function public.join_duel(text, text, text, text) from public, anon;
+grant execute on function public.join_duel(text, text, text, text) to authenticated;
+
+-- Editar metas personalizadas e o tamanho do duelo: só em duelo Pro.
+grant update (name, habit_ids, stake, custom_habits, max_players) on public.duels to authenticated;
+
+create or replace function private.guard_duel_update() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if (select auth.uid()) is null then return new; end if; -- painel/service role
+  if new.custom_habits is distinct from old.custom_habits then
+    if not private.duel_is_pro(new.id) then
+      raise exception 'premium_required: Metas personalizadas são do Premium.' using errcode = 'P0001';
+    end if;
+    if not private.valid_custom_habits(new.custom_habits) then
+      raise exception 'Meta personalizada inválida.';
+    end if;
+  end if;
+  if new.max_players is distinct from old.max_players then
+    if new.max_players > 2 and not private.duel_is_pro(new.id) then
+      raise exception 'premium_required: Duelos em grupo são do Premium.' using errcode = 'P0001';
+    end if;
+    if new.max_players < (select count(*) from public.duel_players where duel_id = new.id) then
+      raise exception 'O duelo já tem mais jogadores do que esse limite.';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+create or replace trigger guard_duel_update before update on public.duels
+  for each row execute function private.guard_duel_update();
+
+-- Bloqueio: em grupo, a pessoa escolhe quem bloquear (p_player). Sem p_player,
+-- bloqueia o único rival (duelo de 2, como antes).
+drop function if exists public.block_player(uuid);
+create or replace function public.block_player(p_duel uuid, p_player uuid default null)
+returns void language plpgsql security definer set search_path = '' as $$
+declare
+  v_uid uuid := (select auth.uid());
+  v_rival public.duel_players;
+begin
+  if v_uid is null then raise exception 'Não autenticado'; end if;
+  if not exists (select 1 from public.duel_players where duel_id = p_duel and player_id = v_uid) then
+    raise exception 'Você não está neste duelo' using errcode = '42501';
+  end if;
+  if p_player is not null then
+    select * into v_rival from public.duel_players where duel_id = p_duel and player_id = p_player and player_id <> v_uid;
+  else
+    select * into v_rival from public.duel_players where duel_id = p_duel and player_id <> v_uid order by joined_at limit 1;
+  end if;
+  if v_rival.player_id is null then raise exception 'Jogador não encontrado neste duelo'; end if;
+  insert into public.blocks (blocker_id, blocked_id, blocked_name, blocked_avatar)
+    values (v_uid, v_rival.player_id, v_rival.name, v_rival.avatar)
+    on conflict (blocker_id, blocked_id) do nothing;
+  delete from public.checkins where duel_id = p_duel and player_id = v_uid;
+  delete from public.duel_players where duel_id = p_duel and player_id = v_uid;
+end;
+$$;
+revoke all on function public.block_player(uuid, uuid) from public, anon;
+grant execute on function public.block_player(uuid, uuid) to authenticated;

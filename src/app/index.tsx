@@ -6,7 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Mascot } from '@/components/Brand';
 import { Avatar, Button, Card, Chip, haptic, ProgressBar, Row, Screen, Txt } from '@/components/ui';
 import { C, R, S } from '@/constants/theme';
-import { getHabit } from '@/domain/habits';
+import { duelGoals } from '@/domain/habits';
 import { ScoreBook } from '@/domain/scoring';
 import type { Checkin, Duel } from '@/domain/types';
 import { useToday } from '@/hooks/useScoreBook';
@@ -26,10 +26,14 @@ function DuelCard({ duel, myId, index }: { duel: Duel; myId: string; index: numb
   const opp = duel.players.find((p) => p.id !== myId) ?? null;
   if (!me) return null;
 
+  const group = (duel.maxPlayers ?? 2) > 2 || duel.players.length > 2;
   const myDay = book.day(me.id, today);
   const oppPoints = opp ? book.day(opp.id, today).total : 0;
-  const goals = duel.habitIds.filter((id) => getHabit(id));
-  const done = goals.filter((id) => (myDay.counts[id] ?? 0) >= (getHabit(id)?.maxPerDay ?? 1)).length;
+  const goalList = duelGoals(duel);
+  const goals = goalList.map((h) => h.id);
+  const done = goalList.filter((h) => (myDay.counts[h.id] ?? 0) >= h.maxPerDay).length;
+  const standings = group ? book.standings('day', today) : [];
+  const myPos = standings.findIndex((s) => s.player.id === me.id);
   const diff = myDay.total - oppPoints;
   const streak = book.currentStreak(me.id, today);
 
@@ -54,6 +58,18 @@ function DuelCard({ duel, myId, index }: { duel: Duel; myId: string; index: numb
             {streak > 1 ? <Chip label={`🔥 ${streak}`} color={C.warning + '22'} textColor={C.warning} /> : null}
           </Row>
 
+          {group ? (
+            <Row style={{ justifyContent: 'space-between' }}>
+              <Row gap={-8}>
+                {duel.players.slice(0, 6).map((p) => (
+                  <Avatar key={p.id} emoji={p.avatar} color={p.color} size={34} />
+                ))}
+              </Row>
+              <Txt variant="h3" color={myPos === 0 && myDay.total > 0 ? C.leafDark : C.ink}>
+                {myDay.total > 0 ? `${myPos + 1}º de ${duel.players.length} · ${myDay.total} pts` : `Grupo de ${duel.players.length}`}
+              </Txt>
+            </Row>
+          ) : (
           <Row style={{ justifyContent: 'space-between' }}>
             <Row gap={S.sm} style={{ flex: 1 }}>
               <Avatar emoji={me.avatar} color={me.color} size={36} />
@@ -76,8 +92,21 @@ function DuelCard({ duel, myId, index }: { duel: Duel; myId: string; index: numb
               </Row>
             )}
           </Row>
+          )}
 
-          {opp ? (
+          {group && opp ? (
+            <>
+              <ProgressBar value={goals.length ? done / goals.length : 0} height={6} />
+              <Row style={{ justifyContent: 'space-between' }}>
+                <Txt variant="small">
+                  Metas hoje: {done}/{goals.length}
+                </Txt>
+                <Txt variant="small">
+                  {standings[0] && standings[0].points > 0 ? `👑 ${standings[0].player.name} lidera` : 'Ninguém pontuou'}
+                </Txt>
+              </Row>
+            </>
+          ) : opp ? (
             <>
               <ProgressBar value={goals.length ? done / goals.length : 0} height={6} />
               <Row style={{ justifyContent: 'space-between' }}>
@@ -117,8 +146,9 @@ export default function HomeScreen() {
   const canAddDuel = useCanAddDuel();
 
   const list = order.map((id) => duels[id]).filter((d): d is Duel => !!d);
-  // No plano grátis, depois do limite, os botões levam para o Premium.
-  const goTo = (path: '/new-duel' | '/join') => router.push(canAddDuel ? path : '/premium');
+  // No plano grátis, depois do limite, "Novo duelo" leva ao Premium. "Entrar" sempre tenta:
+  // duelos de quem é Premium não contam no limite, e o servidor decide.
+  const goTo = (path: '/new-duel' | '/join') => router.push(path === '/join' || canAddDuel ? path : '/premium');
 
   return (
     <Screen refreshControl={<RefreshControl refreshing={syncing} onRefresh={refreshAll} tintColor={C.primary} />}>
@@ -155,7 +185,8 @@ export default function HomeScreen() {
           <Card style={{ backgroundColor: C.gold + '33' }}>
             <Txt variant="h3">🏆 Quer desafiar mais gente?</Txt>
             <Txt variant="small" color={C.textDim}>
-              O plano grátis tem {FREE_DUEL_LIMIT} duelo por vez. Com o Premium você tem duelos ilimitados.
+              O plano grátis tem {FREE_DUEL_LIMIT} duelo por vez. Com o Premium você tem duelos ilimitados, em grupo e com metas
+              suas. Convites de amigos Premium continuam liberados.
             </Txt>
           </Card>
         </Pressable>

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,18 +7,51 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Mascot } from '@/components/Brand';
 import { IconBadge } from '@/components/IconBadge';
 import { Button, Card, haptic, Row, Txt } from '@/components/ui';
-import { C, S } from '@/constants/theme';
+import { C, hardShadow, R, S, STROKE } from '@/constants/theme';
 import { openPrivacyPolicy, openTerms } from '@/lib/links';
-import { FREE_DUEL_LIMIT, openManageSubscriptions, purchasesAvailable } from '@/lib/premium';
+import { FREE_DUEL_LIMIT, getPlanPrices, openManageSubscriptions, purchasesAvailable, type PlanPrice } from '@/lib/premium';
 import { useGame } from '@/store/useGame';
 
 
 
 const BENEFITS = [
   { icon: { ios: 'figure.boxing', android: 'sports_mma', web: 'sports_mma' }, color: C.redCorner, title: 'Duelos ilimitados', desc: 'Desafie quantos amigos quiser ao mesmo tempo' },
-  { icon: { ios: 'person.3.fill', android: 'groups', web: 'groups' }, color: C.blueCorner, title: 'Um duelo por rival', desc: 'Cada amigo com suas metas e sua aposta' },
-  { icon: { ios: 'arrow.uturn.backward.circle.fill', android: 'event_repeat', web: 'event_repeat' }, color: C.leaf, title: 'Cancele quando quiser', desc: 'Direto nos ajustes da loja, sem multa' },
+  { icon: { ios: 'person.3.fill', android: 'groups', web: 'groups' }, color: C.blueCorner, title: 'Duelos em grupo', desc: 'Ligas de até 6 pessoas, com ranking e pódio' },
+  { icon: { ios: 'pencil.and.list.clipboard', android: 'edit_note', web: 'edit_note' }, color: C.primary, title: 'Metas personalizadas', desc: '“Tomar creatina”, “Pular corda”… você cria' },
+  { icon: { ios: 'chart.bar.fill', android: 'bar_chart', web: 'bar_chart' }, color: C.accent, title: 'Histórico e estatísticas', desc: 'Gráficos do duelo inteiro, recordes e pontos fortes' },
+  { icon: { ios: 'crown.fill', android: 'workspace_premium', web: 'workspace_premium' }, color: C.gold, title: 'Visual exclusivo', desc: 'Avatares, cores e a coroa 👑 ao lado do seu nome' },
+  { icon: { ios: 'person.2.fill', android: 'group_add', web: 'group_add' }, color: C.leaf, title: 'Seus amigos entram de graça', desc: 'Nos seus duelos, todo mundo ganha os extras Premium' },
 ] as const;
+
+const PLAN_NAME = { monthly: 'Mensal', annual: 'Anual', lifetime: 'Vitalício' } as const;
+
+function PlanRow({ plan, savings }: { plan: PlanPrice; savings: number | null }) {
+  const best = plan.kind === 'annual';
+  return (
+    <View style={[styles.plan, best && styles.planBest]}>
+      {best ? (
+        <View style={styles.badge}>
+          <Txt variant="small" color={C.ink} style={{ fontWeight: '800' }}>
+            MAIS ESCOLHIDO{savings ? ` · ECONOMIZE ${savings}%` : ''}
+          </Txt>
+        </View>
+      ) : null}
+      <View style={{ flex: 1 }}>
+        <Txt variant="h3">{PLAN_NAME[plan.kind]}</Txt>
+        <Txt variant="small">
+          {plan.kind === 'lifetime'
+            ? 'Pagamento único, sem renovação'
+            : [plan.trial, plan.perMonth ? `equivale a ${plan.perMonth}/mês` : null].filter(Boolean).join(' · ') ||
+              'Renova automaticamente'}
+        </Txt>
+      </View>
+      <Txt variant="h3" color={best ? C.primaryDark : C.ink}>
+        {plan.price}
+        {plan.kind === 'monthly' ? '/mês' : plan.kind === 'annual' ? '/ano' : ''}
+      </Txt>
+    </View>
+  );
+}
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -37,6 +70,21 @@ export default function PremiumScreen() {
   const syncPlanFromStore = useGame((s) => s.syncPlanFromStore);
 
   const [busy, setBusy] = useState<'buy' | 'restore' | null>(null);
+  const [prices, setPrices] = useState<PlanPrice[]>([]);
+
+  useEffect(() => {
+    if (!purchasesAvailable || plan.premium) return;
+    let alive = true;
+    getPlanPrices().then((p) => alive && setPrices(p));
+    return () => {
+      alive = false;
+    };
+  }, [plan.premium]);
+
+  const monthly = prices.find((p) => p.kind === 'monthly');
+  const annual = prices.find((p) => p.kind === 'annual');
+  const savings =
+    monthly && annual && monthly.amount > 0 ? Math.round((1 - annual.amount / (monthly.amount * 12)) * 100) : null;
 
   const buy = async () => {
     setBusy('buy');
@@ -44,7 +92,7 @@ export default function PremiumScreen() {
       const outcome = await openPaywall();
       if (outcome === 'purchased' || outcome === 'restored' || outcome === 'already-pro') {
         haptic('success');
-        Alert.alert('Bem-vindo ao Premium! 🏆', 'Agora você pode ter quantos duelos quiser.', [{ text: 'Bora!', onPress: () => router.back() }]);
+        Alert.alert('Bem-vindo ao Premium! 🏆', 'Duelos ilimitados, grupos, metas suas e estatísticas completas liberados.', [{ text: 'Bora!', onPress: () => router.back() }]);
       } else if (outcome === 'error') {
         Alert.alert('Ops!', 'Não foi possível concluir a compra. Nenhuma cobrança foi feita. Tente de novo em instantes.');
       }
@@ -83,7 +131,7 @@ export default function PremiumScreen() {
             Level Fit Premium
           </Txt>
           <Txt variant="dim" style={{ textAlign: 'center' }}>
-            No plano grátis você tem {FREE_DUEL_LIMIT} duelo por vez. Com o Premium, o ringue é seu.
+            No plano grátis você tem {FREE_DUEL_LIMIT} duelo por vez. Com o Premium, o ringue é seu — e de quem você chamar.
           </Txt>
         </Animated.View>
 
@@ -111,13 +159,23 @@ export default function PremiumScreen() {
           </Card>
         ) : purchasesAvailable ? (
           <View style={{ gap: S.sm }}>
-            <Card style={{ alignItems: 'center', gap: S.xs }}>
-              <Txt variant="label">Escolha seu plano</Txt>
-              <Txt variant="h3" style={{ textAlign: 'center' }}>
-                Mensal · Anual · Vitalício
-              </Txt>
-            </Card>
-            <Button title="Ver planos" icon="🏆" onPress={buy} loading={busy === 'buy'} disabled={!!busy} />
+            {prices.length ? (
+              prices.map((p) => <PlanRow key={p.kind} plan={p} savings={p.kind === 'annual' ? savings : null} />)
+            ) : (
+              <Card style={{ alignItems: 'center', gap: S.xs }}>
+                <Txt variant="label">Escolha seu plano</Txt>
+                <Txt variant="h3" style={{ textAlign: 'center' }}>
+                  Mensal · Anual · Vitalício
+                </Txt>
+              </Card>
+            )}
+            <Button
+              title={annual?.trial ? `Começar ${annual.trial}` : 'Assinar o Premium'}
+              icon="🏆"
+              onPress={buy}
+              loading={busy === 'buy'}
+              disabled={!!busy}
+            />
           </View>
         ) : (
           <Card>
@@ -163,4 +221,27 @@ export default function PremiumScreen() {
 
 const styles = StyleSheet.create({
   legal: { textAlign: 'center' },
+  plan: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: S.md,
+    padding: S.lg,
+    borderRadius: R.lg,
+    backgroundColor: C.surface,
+    borderWidth: STROKE,
+    borderColor: C.ink,
+    boxShadow: hardShadow(4),
+  },
+  planBest: { backgroundColor: C.gold + '33', boxShadow: hardShadow(4, C.primary), marginTop: S.sm },
+  badge: {
+    position: 'absolute',
+    top: -12,
+    left: S.lg,
+    paddingHorizontal: S.sm,
+    paddingVertical: 2,
+    borderRadius: R.pill,
+    backgroundColor: C.gold,
+    borderWidth: 2,
+    borderColor: C.ink,
+  },
 });

@@ -28,6 +28,7 @@ import {
   FREE_PLAN,
   type Account,
   type CreateDuelInput,
+  type DuelPatch,
   type Plan,
   type Profile,
   type ReportReason,
@@ -35,7 +36,6 @@ import {
 } from "@/sync/supabase";
 
 type Reminders = { enabled: boolean; hour: number; minute: number };
-type DuelPatch = Partial<Pick<Duel, "habitIds" | "stake" | "name">>;
 
 type GameState = {
   hydrated: boolean;
@@ -85,8 +85,11 @@ type GameState = {
   createDuel: (input: Omit<CreateDuelInput, "me">) => Promise<string>;
   joinDuel: (code: string) => Promise<string>;
   leaveDuel: (duelId: string) => Promise<void>;
-  /** Bloqueia o rival: sai do duelo, apaga as suas provas dele e impede novos duelos entre vocês. */
-  blockRival: (duelId: string) => Promise<void>;
+  /**
+   * Bloqueia um rival: sai do duelo, apaga as suas provas dele e impede novos duelos entre vocês.
+   * Em grupo, `playerId` diz quem bloquear.
+   */
+  blockRival: (duelId: string, playerId?: string) => Promise<void>;
   updateDuel: (patch: DuelPatch) => Promise<void>;
 
   /** Posta a prova no duelo aberto, ou no `duelId` informado (mesma foto em vários duelos). */
@@ -366,8 +369,8 @@ export const useGame = create<GameState>()(
           get().refreshPlan();
           try {
             await pushPending();
-            const ids = await api.myDuelIds();
-            const snaps = await Promise.all(ids.map((id) => api.fetch(id)));
+            const [ids, pro] = await Promise.all([api.myDuelIds(), api.proMembersByDuel()]);
+            const snaps = await Promise.all(ids.map((id) => api.fetch(id, pro)));
             set((s) => {
               const duels: Record<string, Duel> = {};
               const checkins: Record<string, Checkin[]> = {};
@@ -446,12 +449,12 @@ export const useGame = create<GameState>()(
           removeDuelLocally(duelId);
         },
 
-        async blockRival(duelId) {
+        async blockRival(duelId, playerId) {
           const me = get().account?.id;
           const mine = (get().checkins[duelId] ?? [])
             .filter((c) => c.playerId === me)
             .map((c) => c.id);
-          await api.blockRival(duelId, mine);
+          await api.blockRival(duelId, mine, playerId);
           removeDuelLocally(duelId);
         },
 
@@ -460,9 +463,13 @@ export const useGame = create<GameState>()(
           set((s) => ({
             duels: { ...s.duels, [duel.id]: { ...duel, ...patch } },
           }));
-          await api
-            .updateDuel(duel.id, patch)
-            .catch((e) => set({ syncError: errorText(e) }));
+          try {
+            await api.updateDuel(duel.id, patch);
+          } catch (e) {
+            // O servidor recusou (ex.: recurso Premium): volta ao que era e avisa a tela.
+            set((s) => ({ duels: { ...s.duels, [duel.id]: duel }, syncError: errorText(e) }));
+            throw e;
+          }
         },
 
         async addCheckin(habitId, photoUri, note, duelId) {
@@ -706,7 +713,29 @@ export function useMyId(): string | null {
   return useGame((s) => s.account?.id ?? null);
 }
 
-/** Pode criar ou entrar em mais um duelo? (Premium, ou abaixo do limite do plano grátis.) */
+/** O duelo é "Pro" (algum jogador tem Premium)? Então todos ali ganham os extras. */
+export function isDuelPro(duel: Duel | null | undefined, myId: string | null, iAmPremium: boolean): boolean {
+  if (!duel) return false;
+  if (iAmPremium && myId && duel.players.some((p) => p.id === myId)) return true;
+  return (duel.proPlayerIds?.length ?? 0) > 0;
+}
+
+export function useDuelIsPro(duel: Duel | null | undefined): boolean {
+  const myId = useMyId();
+  const premium = useGame((s) => s.plan.premium);
+  return isDuelPro(duel, myId, premium);
+}
+
+/**
+ * Pode criar mais um duelo? Premium: sempre. Grátis: até FREE_DUEL_LIMIT duelos "comuns";
+ * duelos Pro (de quem assina) não contam. Entrar com código o servidor decide, porque o
+ * duelo pode ser Pro.
+ */
 export function useCanAddDuel(): boolean {
-  return useGame((s) => s.plan.premium || s.duelOrder.length < FREE_DUEL_LIMIT);
+  return useGame((s) => {
+    if (s.plan.premium) return true;
+    const myId = s.account?.id ?? null;
+    const common = s.duelOrder.filter((id) => !isDuelPro(s.duels[id], myId, false)).length;
+    return common < FREE_DUEL_LIMIT;
+  });
 }

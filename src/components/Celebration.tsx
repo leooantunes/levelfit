@@ -76,7 +76,8 @@ export function Celebration({
     }
   };
   const viewerWon = !!winner && winner.id === viewerId;
-  const loser = winner ? standings.find((s) => s.player.id !== winner.id)?.player : null;
+  // Em grupo, quem paga a aposta é o último colocado.
+  const loser = winner && standings.length > 1 ? standings[standings.length - 1].player : null;
 
   const headline = winner ? (viewerWon ? 'K.O.! VOCÊ VENCEU!' : `${winner.name.toUpperCase()} VENCEU!`) : tie ? 'EMPATE NO RINGUE!' : 'NINGUÉM LUTOU';
   const sub = winner

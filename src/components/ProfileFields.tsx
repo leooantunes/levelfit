@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { haptic, Row, Txt } from '@/components/ui';
-import { AVATARS, C, F, hardShadow, PLAYER_COLORS, R, S, STROKE } from '@/constants/theme';
+import { AVATARS, C, F, hardShadow, PLAYER_COLORS, PREMIUM_AVATARS, PREMIUM_COLORS, R, S, STROKE } from '@/constants/theme';
 
 export function Input(props: React.ComponentProps<typeof TextInput>) {
   return <TextInput placeholderTextColor={C.textMuted} {...props} style={[styles.input, props.style]} />;
@@ -12,12 +12,22 @@ export function AvatarPicker({
   color,
   onAvatar,
   onColor,
+  premium,
+  onLocked,
 }: {
   avatar: string;
   color: string;
   onAvatar: (a: string) => void;
   onColor: (c: string) => void;
+  /** Mostra os cosméticos Premium: liberados (true) ou com cadeado (false). Omitido = esconde. */
+  premium?: boolean;
+  onLocked?: () => void;
 }) {
+  const pick = (locked: boolean, fn: () => void) => () => {
+    haptic(locked ? 'warning' : 'light');
+    if (locked) onLocked?.();
+    else fn();
+  };
   return (
     <View style={{ gap: S.md }}>
       <View style={styles.grid}>
@@ -47,6 +57,39 @@ export function AvatarPicker({
           />
         ))}
       </Row>
+      {premium !== undefined ? (
+        <View style={{ gap: S.sm }}>
+          <Txt variant="label" style={{ textAlign: 'center' }}>
+            👑 Exclusivos Premium {premium ? '' : '🔒'}
+          </Txt>
+          <View style={styles.grid}>
+            {PREMIUM_AVATARS.map((a) => (
+              <Pressable
+                key={a}
+                accessibilityLabel={`Avatar ${a}${premium ? '' : ', Premium'}`}
+                onPress={pick(!premium, () => onAvatar(a))}
+                style={[
+                  styles.avatarCell,
+                  styles.premiumCell,
+                  a === avatar && { borderColor: C.ink, backgroundColor: color + '40', boxShadow: hardShadow(3) },
+                  !premium && { opacity: 0.45 },
+                ]}>
+                <Txt style={{ fontSize: 28 }}>{a}</Txt>
+              </Pressable>
+            ))}
+          </View>
+          <Row style={{ justifyContent: 'center' }} gap={S.md}>
+            {PREMIUM_COLORS.map((c) => (
+              <Pressable
+                key={c}
+                accessibilityLabel={`Cor ${c}${premium ? '' : ', Premium'}`}
+                onPress={pick(!premium, () => onColor(c))}
+                style={[styles.color, { backgroundColor: c }, c === color && styles.colorOn, !premium && { opacity: 0.45 }]}
+              />
+            ))}
+          </Row>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -73,6 +116,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: C.hairline,
   },
+  premiumCell: { borderColor: C.gold, borderStyle: 'dashed' },
   color: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: C.ink },
   colorOn: { borderWidth: 4, transform: [{ scale: 1.15 }], boxShadow: hardShadow(3) },
   input: {

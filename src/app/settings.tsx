@@ -227,7 +227,14 @@ export default function SettingsScreen() {
           {account.email}
         </Txt>
         <Input value={name} onChangeText={setName} placeholder="Seu nome ou apelido" maxLength={16} />
-        <AvatarPicker avatar={avatar} color={color} onAvatar={setAvatar} onColor={setColor} />
+        <AvatarPicker
+          avatar={avatar}
+          color={color}
+          onAvatar={setAvatar}
+          onColor={setColor}
+          premium={plan.premium}
+          onLocked={() => router.push('/premium')}
+        />
         <Button title="Salvar perfil" onPress={save} loading={busy} disabled={!dirty || !name.trim()} />
         <Txt variant="small">O novo nome e avatar aparecem em todos os seus duelos.</Txt>
       </Card>
@@ -240,7 +247,9 @@ export default function SettingsScreen() {
           </Txt>
         </Row>
         <Txt variant="small">
-          {plan.premium ? 'Duelos ilimitados.' : `${FREE_DUEL_LIMIT} duelo por vez. Assine o Premium para ter duelos ilimitados.`}
+          {plan.premium
+            ? 'Duelos ilimitados, grupos de até 6, metas personalizadas, histórico completo e visuais exclusivos.'
+            : `${FREE_DUEL_LIMIT} duelo por vez. Com o Premium: duelos ilimitados, grupos, metas suas e mais.`}
         </Txt>
         {plan.premium ? (
           plan.isLifetime ? null : (

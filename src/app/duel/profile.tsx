@@ -5,6 +5,7 @@ import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
 import { Avatar, Button, Card, Chip, haptic, ProgressBar, Row, Screen, Txt } from '@/components/ui';
 import { C, hardShadow, R, S, STROKE } from '@/constants/theme';
 import { achievementsFor, levelInfo } from '@/domain/progression';
+import type { Player } from '@/domain/types';
 import { usePlayers, useScoreBook, useToday } from '@/hooks/useScoreBook';
 import { useActiveCheckins, useActiveDuel, useGame } from '@/store/useGame';
 
@@ -60,11 +61,11 @@ export default function ProfileScreen() {
       },
     ]);
 
-  const block = () => {
-    if (!opponent) return;
+  const rivals = duel.players.filter((p) => p.id !== me.id);
+  const block = (rival: Player) => {
     Alert.alert(
-      `Bloquear ${opponent.name}?`,
-      `Você sai de "${duel.name}", suas provas desse duelo são apagadas e ${opponent.name} não poderá mais duelar com você. Dá para desbloquear depois em Minha conta.`,
+      `Bloquear ${rival.name}?`,
+      `Você sai de "${duel.name}", suas provas desse duelo são apagadas e ${rival.name} não poderá mais duelar com você. Dá para desbloquear depois em Minha conta.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -72,7 +73,7 @@ export default function ProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await blockRival(duel.id);
+              await blockRival(duel.id, rival.id);
               haptic('success');
               router.dismissTo('/');
             } catch (e) {
@@ -172,7 +173,9 @@ export default function ProfileScreen() {
       </Card>
 
       <Button title="Sair do duelo" variant="ghost" onPress={leave} />
-      {opponent ? <Button title={`Bloquear ${opponent.name}`} icon="🚫" variant="danger" onPress={block} /> : null}
+      {rivals.map((r) => (
+        <Button key={r.id} title={`Bloquear ${r.name}`} icon="🚫" variant="danger" onPress={() => block(r)} />
+      ))}
     </Screen>
   );
 }

@@ -142,9 +142,33 @@ supabase/schema.sql    banco, RLS, funções e storage
 
 ## Premium (Level Fit Pro)
 
-Grátis: **1 duelo por vez** (criado ou entrado com código). Pro: duelos ilimitados. A regra vale no banco (`create_duel`/`join_duel`), não só na tela.
+| | Grátis | Premium |
+|---|---|---|
+| Duelos ao mesmo tempo | 1 | ilimitados |
+| Duelos em grupo (3 a 6 pessoas) | — | ✅ |
+| Metas personalizadas | — | ✅ (até 10 por duelo) |
+| Estatísticas (aba **Números**) | últimos 7 dias | 30 dias e o duelo inteiro |
+| Avatares, cores e coroa 👑 exclusivos | — | ✅ |
+| **Premium dupla:** quem entra num duelo seu ganha os extras ali e não gasta o limite grátis | — | ✅ |
 
-Como a cobrança é dentro do app, Apple e Google exigem as compras da própria loja. O app usa o [RevenueCat](https://www.revenuecat.com) (`react-native-purchases` + `react-native-purchases-ui`): a compra acontece no **Paywall** do RevenueCat e "Gerenciar assinatura" abre o **Customer Center**. O servidor confere a assinatura com a função [`premium-sync`](supabase/functions/premium-sync/index.ts). Código em [`src/lib/premium.ts`](src/lib/premium.ts).
+As regras valem no banco (`create_duel`, `join_duel` e o gatilho `guard_duel_update`), não só na tela. Um duelo é **Pro** quando algum jogador dele tem Premium.
+
+> **Banco:** os recursos novos dependem da migração **`premium_perks`** (fim do [`supabase/schema.sql`](supabase/schema.sql)). Rode o arquivo de novo no SQL Editor; ele pode ser executado várias vezes. Até lá, o app continua funcionando como antes, só sem grupos e metas personalizadas.
+
+### Preços
+
+| Plano | Produto | Preço (Brasil) | Observação |
+|---|---|---|---|
+| Mensal | `monthly` | **R$ 9,90/mês** | âncora |
+| Anual | `yearly` | **R$ 59,90/ano** (≈ R$ 4,99/mês) | plano principal, com **7 dias grátis** |
+| Vitalício | `lifetime` | **R$ 129,90** | pagamento único |
+
+O preço é definido **na loja**, não no código: o app lê os valores da offering do RevenueCat e mostra exatamente o que a loja vai cobrar (moeda e impostos do país de quem compra). Para aplicar:
+
+1. **App Store Connect → seu app → Assinaturas:** no grupo de assinaturas, defina o preço de `monthly` (R$ 9,90) e `yearly` (R$ 59,90) com o Brasil como país base, e crie para `yearly` uma **oferta introdutória → teste grátis → 7 dias**. Em **Compras dentro do app**, `lifetime` (não consumível) a R$ 129,90.
+2. **Google Play Console → Monetizar → Produtos:** em `monthly` e `yearly`, crie o plano base com o preço em BRL; em `yearly`, adicione uma **oferta de teste grátis de 7 dias**. `lifetime` como produto único a R$ 129,90.
+3. **Comissão de 15%:** inscreva-se no [App Store Small Business Program](https://developer.apple.com/app-store/small-business-program/) e, no Google Play, confirme a taxa de 15% para assinaturas (Play Console → Configurações → Taxa de serviço). Assim sobram cerca de R$ 8,40 do mensal e R$ 50,90 do anual, antes de impostos.
+4. No RevenueCat, os produtos da loja já entram com o preço novo; não precisa mudar nada no app.
 
 Planos (todos dão o entitlement **`levelfit_pro`**):
 

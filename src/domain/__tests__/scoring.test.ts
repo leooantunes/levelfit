@@ -6,6 +6,7 @@ import { addDays, periodEnd, previousPeriodKey, weekKey } from '../dates';
 import { dailyChallenge, getHabit } from '../habits';
 import { levelInfo } from '../progression';
 import { PERFECT_DAY_BONUS, ScoreBook, streakMultiplier } from '../scoring';
+import { duelStats, rangeDays } from '../stats';
 import type { Checkin, Duel } from '../types';
 
 const duel: Duel = {
@@ -125,5 +126,70 @@ describe('níveis', () => {
     assert.ok(levelInfo(1000).level > levelInfo(100).level);
     const l = levelInfo(500);
     assert.ok(l.progress >= 0 && l.progress < 1);
+  });
+});
+
+describe('metas personalizadas e grupo', () => {
+  const group: Duel = {
+    ...duel,
+    id: 'duel-g',
+    habitIds: ['agua', 'custom-abc123'],
+    customHabits: [{ id: 'custom-abc123', title: 'Creatina', emoji: '💊', points: 20 }],
+    maxPlayers: 3,
+    players: [...duel.players, { id: 'c', name: 'Caio', avatar: '🦊', color: '#00f' }],
+  };
+
+  it('meta personalizada pontua e conta para o dia perfeito', () => {
+    const day = '2026-11-03';
+    const book = new ScoreBook(group, [ck('a', 'agua', day), ck('a', 'custom-abc123', day)]);
+    const b = book.day('a', day);
+    assert.equal(b.base, 10 + 20);
+    assert.equal(b.perfect, true);
+  });
+
+  it('meta personalizada apagada deixa de contar', () => {
+    const day = '2026-11-03';
+    const gone: Duel = { ...group, customHabits: [] };
+    const book = new ScoreBook(gone, [ck('a', 'agua', day), ck('a', 'custom-abc123', day)]);
+    const b = book.day('a', day);
+    assert.equal(b.base, 10);
+    assert.equal(b.perfect, true); // só sobrou a água como meta válida
+  });
+
+  it('ranking em grupo ordena os 3 jogadores', () => {
+    const day = '2026-11-03';
+    const book = new ScoreBook(group, [
+      ck('c', 'custom-abc123', day),
+      ck('a', 'agua', day),
+    ]);
+    const r = book.result('day', day, '2026-11-11');
+    assert.deepEqual(r.standings.map((s) => s.player.id), ['c', 'a', 'b']);
+    assert.equal(r.winner?.id, 'c');
+  });
+});
+
+describe('estatísticas', () => {
+  it('soma por dia, média, recorde e vitórias do dia', () => {
+    const book = new ScoreBook(duel, [
+      ck('a', 'leitura', '2026-11-02'),
+      ck('a', 'agua', '2026-11-03'),
+      ck('b', 'agua', '2026-11-03'),
+      ck('b', 'leitura', '2026-11-04'),
+    ]);
+    const s = duelStats(book, '2026-11-05', null);
+    assert.equal(s.days.length, 4); // 02 a 05
+    const a = s.players.find((p) => p.player.id === 'a')!;
+    const b = s.players.find((p) => p.player.id === 'b')!;
+    assert.deepEqual(a.daily, [15, 10, 0, 0]);
+    assert.equal(a.total, 25);
+    assert.equal(a.bestDay?.dateKey, '2026-11-02');
+    assert.equal(a.dayWins, 1); // dia 03 empatou
+    assert.equal(b.dayWins, 1);
+    assert.equal(a.habitCounts.agua, 1);
+  });
+
+  it('janela de N dias não passa do início do duelo', () => {
+    assert.deepEqual(rangeDays('2026-11-02', '2026-11-03', 7), ['2026-11-02', '2026-11-03']);
+    assert.equal(rangeDays('2026-10-01', '2026-11-03', 7).length, 7);
   });
 });

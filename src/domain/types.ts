@@ -1,4 +1,4 @@
-export type HabitCategory = 'mente' | 'corpo' | 'nutricao' | 'bem-estar';
+export type HabitCategory = 'mente' | 'corpo' | 'nutricao' | 'bem-estar' | 'personalizado';
 
 export type Habit = {
   id: string;
@@ -12,6 +12,15 @@ export type Habit = {
   maxPerDay: number;
   /** Dica do que mostrar na foto de prova. */
   proofHint: string;
+};
+
+/** Meta criada pelos jogadores de um duelo Premium. */
+export type CustomHabit = {
+  /** `custom-` + 6 a 12 letras/números minúsculos. */
+  id: string;
+  title: string;
+  emoji: string;
+  points: number;
 };
 
 export type Player = {
@@ -61,6 +70,12 @@ export type Duel = {
   /** Aposta: o que o perdedor da semana/mês paga. */
   stake?: string;
   players: Player[];
+  /** Máximo de jogadores (2 a 6). Mais de 2 é duelo em grupo (Premium). Ausente = 2. */
+  maxPlayers?: number;
+  /** Metas personalizadas do duelo (Premium). */
+  customHabits?: CustomHabit[];
+  /** Jogadores com Premium neste duelo. Se houver algum, o duelo é "Pro" para todos. */
+  proPlayerIds?: string[];
 };
 
 export type Period = 'day' | 'week' | 'month';

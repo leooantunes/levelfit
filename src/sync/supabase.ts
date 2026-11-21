@@ -3,7 +3,7 @@ import { createClient, type SupabaseClient, type User } from '@supabase/supabase
 import { File } from 'expo-file-system';
 import { AppState, Platform } from 'react-native';
 
-import type { Checkin, Duel, HealthProof, Player } from '@/domain/types';
+import type { Checkin, CustomHabit, Duel, HealthProof, Player } from '@/domain/types';
 
 const URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const KEY = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -15,7 +15,17 @@ const SIGNED_URL_TTL = 60 * 60 * 24 * 7; // 7 dias
 
 export type Profile = Omit<Player, 'id'>;
 export type Account = Profile & { id: string; email: string };
-export type CreateDuelInput = { name: string; habitIds: string[]; stake?: string; me: Profile };
+export type CreateDuelInput = {
+  name: string;
+  habitIds: string[];
+  stake?: string;
+  me: Profile;
+  /** 2 = duelo clássico; 3 a 6 = grupo (Premium). */
+  maxPlayers?: number;
+  /** Metas personalizadas (Premium). */
+  customHabits?: CustomHabit[];
+};
+export type DuelPatch = Partial<Pick<Duel, 'habitIds' | 'stake' | 'name' | 'customHabits' | 'maxPlayers'>>;
 export type Snapshot = { duel: Duel; checkins: Checkin[] };
 export type ReportReason = 'ofensiva' | 'nudez' | 'spam' | 'outro';
 export type BlockedPlayer = { id: string; name: string; avatar: string };
@@ -29,16 +39,17 @@ function toPlan(row: { premium_until: string | null; is_lifetime: boolean } | nu
   return { premium: active, premiumUntil: row.premium_until, isLifetime: row.is_lifetime };
 }
 
-/** O banco recusou por limite do plano grátis (create_duel/join_duel). */
+/** O banco recusou porque o recurso é do Premium (limite de duelos, grupo, metas personalizadas). */
 export class PremiumRequiredError extends Error {
-  constructor() {
-    super('O plano grátis permite 1 duelo por vez. Assine o Premium para ter mais.');
+  constructor(message = 'O plano grátis permite 1 duelo por vez. Assine o Premium para ter mais.') {
+    super(message);
     this.name = 'PremiumRequiredError';
   }
 }
 
 function duelError(error: { message: string }): Error {
-  return error.message.startsWith('premium_required') ? new PremiumRequiredError() : new Error(error.message);
+  const m = /^premium_required:\s*(.*)$/s.exec(error.message);
+  return m ? new PremiumRequiredError(m[1] || undefined) : new Error(error.message);
 }
 
 let client: SupabaseClient | null = null;
@@ -96,7 +107,17 @@ async function requireUserId(): Promise<string> {
   return data.session.user.id;
 }
 
-type DuelRow = { id: string; code: string; name: string; habit_ids: string[]; stake: string | null; created_at: string };
+type DuelRow = {
+  id: string;
+  code: string;
+  name: string;
+  habit_ids: string[];
+  stake: string | null;
+  created_at: string;
+  /** Colunas da migração "premium_perks" (ausentes num banco antigo). */
+  max_players?: number;
+  custom_habits?: CustomHabit[];
+};
 type PlayerRow = { duel_id: string; player_id: string; name: string; avatar: string; color: string };
 type CheckinRow = {
   id: string;
@@ -113,7 +134,7 @@ type CheckinRow = {
 };
 
 const toPlayer = (r: PlayerRow): Player => ({ id: r.player_id, name: r.name, avatar: r.avatar, color: r.color });
-const toDuel = (r: DuelRow, players: Player[]): Duel => ({
+const toDuel = (r: DuelRow, players: Player[], proPlayerIds: string[]): Duel => ({
   id: r.id,
   code: r.code,
   name: r.name,
@@ -121,17 +142,30 @@ const toDuel = (r: DuelRow, players: Player[]): Duel => ({
   stake: r.stake ?? undefined,
   createdAt: r.created_at,
   players,
+  maxPlayers: r.max_players ?? 2,
+  customHabits: Array.isArray(r.custom_habits) ? r.custom_habits : [],
+  proPlayerIds,
 });
 
-async function loadDuel(duelId: string): Promise<Duel> {
+/** Quem tem Premium em cada duelo da pessoa (Premium dupla). Banco antigo: ninguém. */
+async function proMembersByDuel(): Promise<Map<string, string[]>> {
+  const { data, error } = await supabase().rpc('my_duels_pro_members');
+  const map = new Map<string, string[]>();
+  if (error) return map; // PGRST202 = migração ainda não aplicada
+  for (const r of (data ?? []) as { duel_id: string; player_id: string }[]) map.set(r.duel_id, [...(map.get(r.duel_id) ?? []), r.player_id]);
+  return map;
+}
+
+async function loadDuel(duelId: string, pro?: Map<string, string[]>): Promise<Duel> {
   const sb = supabase();
-  const [{ data: duel, error: e1 }, { data: players, error: e2 }] = await Promise.all([
+  const [{ data: duel, error: e1 }, { data: players, error: e2 }, proMap] = await Promise.all([
     sb.from('duels').select('*').eq('id', duelId).single<DuelRow>(),
     sb.from('duel_players').select('*').eq('duel_id', duelId).order('joined_at').returns<PlayerRow[]>(),
+    pro ? Promise.resolve(pro) : proMembersByDuel(),
   ]);
   if (e1 || !duel) throw e1 ?? new Error('Duelo não encontrado.');
   if (e2) throw e2;
-  return toDuel(duel, (players ?? []).map(toPlayer));
+  return toDuel(duel, (players ?? []).map(toPlayer), proMap.get(duelId) ?? []);
 }
 
 export const api = {
@@ -233,14 +267,18 @@ export const api = {
 
   async createDuel(input: CreateDuelInput): Promise<Duel> {
     await requireUserId();
-    const { data, error } = await supabase().rpc('create_duel', {
+    const params: Record<string, unknown> = {
       p_name: input.name,
       p_habit_ids: input.habitIds,
       p_stake: input.stake ?? null,
       p_player_name: input.me.name,
       p_avatar: input.me.avatar,
       p_color: input.me.color,
-    });
+    };
+    // Só manda os campos Premium quando usados: assim o duelo clássico funciona até num banco antigo.
+    if (input.maxPlayers && input.maxPlayers !== 2) params.p_max_players = input.maxPlayers;
+    if (input.customHabits?.length) params.p_custom_habits = input.customHabits;
+    const { data, error } = await supabase().rpc('create_duel', params);
     if (error) throw duelError(error);
     return loadDuel((data as DuelRow).id);
   },
@@ -267,10 +305,11 @@ export const api = {
    * Bloqueia o rival do duelo: o servidor guarda o bloqueio, apaga as suas provas
    * desse duelo e tira você dele. Depois apaga as suas fotos do armazenamento.
    */
-  async blockRival(duelId: string, myCheckinIds: string[]) {
+  async blockRival(duelId: string, myCheckinIds: string[], playerId?: string) {
     const sb = supabase();
     await requireUserId();
-    const { error } = await sb.rpc('block_player', { p_duel: duelId });
+    // Em grupo, diz quem bloquear; no duelo de 2 o servidor acha o único rival.
+    const { error } = await sb.rpc('block_player', playerId ? { p_duel: duelId, p_player: playerId } : { p_duel: duelId });
     if (error) {
       throw new Error(
         error.code === 'PGRST202' ? 'Bloqueio indisponível no momento. Tente de novo mais tarde.' : error.message,
@@ -300,18 +339,23 @@ export const api = {
     if (error) throw new Error('Não foi possível desbloquear agora. Tente de novo.');
   },
 
-  async updateDuel(duelId: string, patch: Partial<Pick<Duel, 'habitIds' | 'stake' | 'name'>>) {
+  async updateDuel(duelId: string, patch: DuelPatch) {
     const row: Partial<DuelRow> = {};
     if (patch.habitIds) row.habit_ids = patch.habitIds;
     if (patch.name) row.name = patch.name;
     if ('stake' in patch) row.stake = patch.stake ?? null;
+    if (patch.customHabits) row.custom_habits = patch.customHabits;
+    if (patch.maxPlayers) row.max_players = patch.maxPlayers;
     const { error } = await supabase().from('duels').update(row).eq('id', duelId);
-    if (error) throw error;
+    if (error) throw duelError(error);
   },
 
-  async fetch(duelId: string): Promise<Snapshot> {
+  /** Quem tem Premium em cada duelo (para buscar uma vez só ao atualizar tudo). */
+  proMembersByDuel,
+
+  async fetch(duelId: string, pro?: Map<string, string[]>): Promise<Snapshot> {
     const sb = supabase();
-    const duel = await loadDuel(duelId);
+    const duel = await loadDuel(duelId, pro);
     const { data, error } = await sb
       .from('checkins')
       .select('*')

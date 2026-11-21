@@ -7,20 +7,31 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { GoalPicker } from '@/components/GoalPicker';
 import { Input, SuggestionChip } from '@/components/ProfileFields';
 import { Button, Card, haptic, ProgressBar, Row, Txt } from '@/components/ui';
-import { C, S } from '@/constants/theme';
+import { C, hardShadow, R, S } from '@/constants/theme';
 import { DEFAULT_HABIT_IDS } from '@/domain/habits';
+import type { CustomHabit } from '@/domain/types';
 import { useGame } from '@/store/useGame';
 import { PremiumRequiredError } from '@/sync/supabase';
 
 const STAKES = ['um açaí 🍧', 'o jantar 🍝', 'o cinema 🎬', 'lavar a louça 🧽', 'um café ☕'];
 
+const SIZES = [
+  { n: 2, label: '1 x 1', desc: 'Clássico' },
+  { n: 3, label: '3', desc: 'Trio' },
+  { n: 4, label: '4', desc: 'Quarteto' },
+  { n: 6, label: '6', desc: 'Liga' },
+];
+
 export default function NewDuelScreen() {
   const createDuel = useGame((s) => s.createDuel);
   const openDuel = useGame((s) => s.openDuel);
   const myName = useGame((s) => s.account?.name ?? 'Eu');
+  const premium = useGame((s) => s.plan.premium);
 
   const [step, setStep] = useState(0);
   const [habitIds, setHabitIds] = useState<string[]>(DEFAULT_HABIT_IDS);
+  const [customHabits, setCustomHabits] = useState<CustomHabit[]>([]);
+  const [maxPlayers, setMaxPlayers] = useState(2);
   const [name, setName] = useState('');
   const [stake, setStake] = useState('');
   const [busy, setBusy] = useState(false);
@@ -32,6 +43,9 @@ export default function NewDuelScreen() {
         name: name.trim() || `Duelo de ${myName}`,
         habitIds,
         stake: stake.trim() || undefined,
+        maxPlayers,
+        // Só envia as personalizadas que continuam escolhidas.
+        customHabits: customHabits.filter((c) => habitIds.includes(c.id)),
       });
       haptic('success');
       openDuel(id);
@@ -48,7 +62,14 @@ export default function NewDuelScreen() {
     <View key="goals" style={{ gap: S.lg }}>
       <Txt variant="title">Regras da luta</Txt>
       <Txt variant="dim">Sugerimos um pacote equilibrado. Ajuste do seu jeito. Todo dia também aparece um ⚡ desafio bônus valendo 2x.</Txt>
-      <GoalPicker selected={habitIds} onChange={setHabitIds} />
+      <GoalPicker
+        selected={habitIds}
+        onChange={setHabitIds}
+        custom={customHabits}
+        onCustomChange={setCustomHabits}
+        canCustom={premium}
+        onLocked={() => router.push('/premium')}
+      />
       <Button
         title="Continuar"
         onPress={() => {
@@ -62,7 +83,50 @@ export default function NewDuelScreen() {
     <View key="stake" style={{ gap: S.lg }}>
       <Txt variant="title">Valendo o quê? 💸</Txt>
       <Txt variant="dim">Opcional, mas deixa tudo mais divertido: quem perder a semana ou o mês paga a aposta.</Txt>
-      <Input value={name} onChangeText={setName} placeholder={`Nome do duelo (ex.: ${myName} x Ana)`} maxLength={30} />
+      <View style={{ gap: S.sm }}>
+        <Txt variant="label">🥊 Quantos no ringue? {premium ? '' : '· grupo é Premium'}</Txt>
+        <Row gap={S.sm}>
+          {SIZES.map((o) => {
+            const locked = o.n > 2 && !premium;
+            const on = maxPlayers === o.n;
+            return (
+              <Pressable
+                key={o.n}
+                accessibilityRole="button"
+                accessibilityLabel={`${o.desc}${locked ? ', Premium' : ''}`}
+                onPress={() => {
+                  haptic();
+                  if (locked) router.push('/premium');
+                  else setMaxPlayers(o.n);
+                }}
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  paddingVertical: S.sm,
+                  borderRadius: R.md,
+                  borderWidth: 2.5,
+                  borderColor: C.ink,
+                  backgroundColor: on ? C.primary : locked ? C.surface2 : C.surface,
+                  boxShadow: on ? hardShadow(3) : undefined,
+                }}>
+                <Txt variant="h3" color={on ? C.onColor : C.ink}>
+                  {locked ? '🔒 ' : ''}
+                  {o.label}
+                </Txt>
+                <Txt variant="small" color={on ? C.onColor : C.textMuted}>
+                  {o.desc}
+                </Txt>
+              </Pressable>
+            );
+          })}
+        </Row>
+      </View>
+      <Input
+        value={name}
+        onChangeText={setName}
+        placeholder={maxPlayers > 2 ? 'Nome do grupo (ex.: Liga do Escritório)' : `Nome do duelo (ex.: ${myName} x Ana)`}
+        maxLength={30}
+      />
       <Input value={stake} onChangeText={setStake} placeholder="Aposta (ex.: um açaí 🍧)" maxLength={40} />
       <Row style={{ flexWrap: 'wrap' }}>
         {STAKES.map((s) => (
@@ -76,7 +140,11 @@ export default function NewDuelScreen() {
           dias x1.5{'\n'}• Prova contestada pelo rival não pontua
         </Txt>
       </Card>
-      <Txt variant="small">Depois de criar, você recebe um código de 6 letras para mandar pro seu rival.</Txt>
+      <Txt variant="small">
+        {maxPlayers > 2
+          ? `Depois de criar, você recebe um código de 6 letras para chamar até ${maxPlayers - 1} pessoas. Elas entram de graça, mesmo sem Premium.`
+          : 'Depois de criar, você recebe um código de 6 letras para mandar pro seu rival.'}
+      </Txt>
       <Button title="Soar o gongo! 🔔" onPress={finish} loading={busy} />
     </View>,
   ];

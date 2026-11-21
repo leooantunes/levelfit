@@ -26,6 +26,10 @@ export default function DuelTabsLayout() {
           <NativeTabs.Trigger.Label>Ranking</NativeTabs.Trigger.Label>
           <NativeTabs.Trigger.Icon sf={{ default: 'trophy', selected: 'trophy.fill' }} md="emoji_events" />
         </NativeTabs.Trigger>
+        <NativeTabs.Trigger name="stats">
+          <NativeTabs.Trigger.Label>Números</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Icon sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }} md="bar_chart" />
+        </NativeTabs.Trigger>
         <NativeTabs.Trigger name="feed">
           <NativeTabs.Trigger.Label>Provas</NativeTabs.Trigger.Label>
           <NativeTabs.Trigger.Icon sf={{ default: 'photo.on.rectangle', selected: 'photo.fill.on.rectangle.fill' }} md="photo_library" />

@@ -8,7 +8,13 @@
  * - appUserID = id do usuário no Supabase, para a compra seguir a conta.
  */
 import { Linking, Platform } from 'react-native';
-import Purchases, { LOG_LEVEL, type CustomerInfo, type CustomerInfoUpdateListener } from 'react-native-purchases';
+import Purchases, {
+  LOG_LEVEL,
+  PACKAGE_TYPE,
+  type CustomerInfo,
+  type CustomerInfoUpdateListener,
+  type PurchasesIntroPrice,
+} from 'react-native-purchases';
 import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
 
 /** Duelos ativos permitidos no plano grátis (o banco também confere, em create_duel/join_duel). */
@@ -75,6 +81,67 @@ export async function getCustomerInfo(): Promise<CustomerInfo | null> {
     return await Purchases.getCustomerInfo();
   } catch {
     return null;
+  }
+}
+
+/**
+ * Preço de cada plano, como a loja cobra (moeda e impostos do país da pessoa).
+ * Os valores são definidos na App Store Connect / Google Play Console; o app só exibe.
+ */
+export type PlanPrice = {
+  kind: 'monthly' | 'annual' | 'lifetime';
+  price: string;
+  /** Valor numérico, para calcular a economia do anual. */
+  amount: number;
+  /** Anual dividido por 12 (ex.: "R$ 4,99"). */
+  perMonth: string | null;
+  /** Teste grátis (ex.: "7 dias grátis"), se houver. */
+  trial: string | null;
+};
+
+const UNIT_PT: Record<string, [string, string]> = {
+  DAY: ['dia', 'dias'],
+  WEEK: ['semana', 'semanas'],
+  MONTH: ['mês', 'meses'],
+  YEAR: ['ano', 'anos'],
+};
+
+function trialLabel(intro: PurchasesIntroPrice | null): string | null {
+  if (!intro || intro.price !== 0) return null;
+  const n = intro.periodNumberOfUnits * Math.max(1, intro.cycles);
+  const [one, many] = UNIT_PT[intro.periodUnit] ?? ['período', 'períodos'];
+  return `${n} ${n === 1 ? one : many} grátis`;
+}
+
+/** Preços da offering atual. Lista vazia se a loja não respondeu. */
+export async function getPlanPrices(): Promise<PlanPrice[]> {
+  if (!configured) return [];
+  try {
+    const offerings = await Purchases.getOfferings();
+    const kinds: Partial<Record<PACKAGE_TYPE, PlanPrice['kind']>> = {
+      [PACKAGE_TYPE.MONTHLY]: 'monthly',
+      [PACKAGE_TYPE.ANNUAL]: 'annual',
+      [PACKAGE_TYPE.LIFETIME]: 'lifetime',
+    };
+    const order: PlanPrice['kind'][] = ['monthly', 'annual', 'lifetime'];
+    return (offerings.current?.availablePackages ?? [])
+      .flatMap((pkg): PlanPrice[] => {
+        const kind = kinds[pkg.packageType];
+        if (!kind) return [];
+        const p = pkg.product;
+        return [
+          {
+            kind,
+            price: p.priceString,
+            amount: p.price,
+            perMonth: kind === 'annual' ? p.pricePerMonthString : null,
+            trial: trialLabel(p.introPrice),
+          },
+        ];
+      })
+      .sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
+  } catch {
+    return [];
   }
 }
 

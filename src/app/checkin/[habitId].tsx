@@ -10,7 +10,7 @@ import { ProofThumb } from '@/components/HealthProof';
 import { Button, Card, Chip, haptic, Row, Txt } from '@/components/ui';
 import { C, R, S } from '@/constants/theme';
 import { formatTime } from '@/domain/dates';
-import { CHALLENGE_MULTIPLIER, dailyChallenge, getHabit } from '@/domain/habits';
+import { CHALLENGE_MULTIPLIER, dailyChallenge, habitFor } from '@/domain/habits';
 import { formatHealthValue, HEALTH_GOALS } from '@/domain/healthGoals';
 import type { Checkin, Duel, Habit } from '@/domain/types';
 import { usePlayers, useToday } from '@/hooks/useScoreBook';
@@ -44,8 +44,8 @@ function duelsSharingGoal(args: {
 
 export default function CheckinScreen() {
   const { habitId } = useLocalSearchParams<{ habitId: string }>();
-  const habit = getHabit(habitId);
   const duel = useActiveDuel();
+  const habit = habitFor(duel, habitId);
   const checkins = useActiveCheckins();
   const addCheckin = useGame((s) => s.addCheckin);
   const today = useToday();

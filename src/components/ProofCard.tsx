@@ -4,7 +4,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { C, hardShadow, R, S, STROKE } from '@/constants/theme';
 import { formatTime } from '@/domain/dates';
-import { getHabit } from '@/domain/habits';
+import { habitFor } from '@/domain/habits';
+import { useGame } from '@/store/useGame';
 import type { Checkin, Player } from '@/domain/types';
 
 import { HealthProofView } from './HealthProof';
@@ -55,7 +56,8 @@ export function ProofCard({
   viewerId: string;
   onReact: (emoji: string | null) => void;
 }) {
-  const habit = getHabit(checkin.habitId);
+  const duel = useGame((s) => s.duels[checkin.duelId]);
+  const habit = habitFor(duel, checkin.habitId);
   return (
     <View style={[styles.card, checkin.disputed && { borderColor: C.danger }]}>
       <Row style={{ justifyContent: 'space-between' }}>

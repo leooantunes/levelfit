@@ -1,4 +1,4 @@
-import type { Habit } from './types';
+import type { CustomHabit, Duel, Habit } from './types';
 
 export const HABITS: Habit[] = [
   {
@@ -155,15 +155,51 @@ export const HABITS: Habit[] = [
 
 export const HABITS_BY_ID: Record<string, Habit> = Object.fromEntries(HABITS.map((h) => [h.id, h]));
 
+/** Hábito do catálogo (não inclui metas personalizadas: para isso use `habitFor`). */
 export function getHabit(id: string): Habit | undefined {
   return HABITS_BY_ID[id];
 }
+
+export const isCustomHabitId = (id: string) => id.startsWith('custom-');
+
+export function customToHabit(c: CustomHabit): Habit {
+  return {
+    id: c.id,
+    title: c.title,
+    emoji: c.emoji,
+    description: 'Meta personalizada do duelo.',
+    points: c.points,
+    category: 'personalizado',
+    maxPerDay: 1,
+    proofHint: 'Uma foto que mostre que você cumpriu.',
+  };
+}
+
+/** Hábito de um duelo: metas personalizadas dele ou o catálogo. */
+export function habitFor(duel: Pick<Duel, 'customHabits'> | null | undefined, id: string): Habit | undefined {
+  const custom = duel?.customHabits?.find((c) => c.id === id);
+  return custom ? customToHabit(custom) : HABITS_BY_ID[id];
+}
+
+/** Metas do duelo que existem (ignora metas personalizadas removidas). */
+export function duelGoals(duel: Pick<Duel, 'habitIds' | 'customHabits'>): Habit[] {
+  return duel.habitIds.map((id) => habitFor(duel, id)).filter((h): h is Habit => !!h);
+}
+
+/** Cria o id de uma nova meta personalizada. */
+export function newCustomHabitId(): string {
+  return `custom-${Math.random().toString(36).slice(2, 10).padEnd(8, '0')}`;
+}
+
+export const CUSTOM_POINTS = [5, 10, 15, 20, 25, 30];
+export const MAX_CUSTOM_HABITS = 10;
 
 export const CATEGORY_LABEL: Record<Habit['category'], string> = {
   mente: 'Mente',
   corpo: 'Corpo',
   nutricao: 'Nutrição',
   'bem-estar': 'Bem-estar',
+  personalizado: 'Personalizadas',
 };
 
 /** Pacotes de metas que o app sugere ao criar o duelo. */

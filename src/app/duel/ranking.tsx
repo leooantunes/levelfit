@@ -18,17 +18,19 @@ const PERIODS: { value: Period; label: string }[] = [
 const TROPHY = { day: '🥊', week: '🏆', month: '👑' } as const;
 
 function Podium({ result }: { result: PeriodResult }) {
-  const [first, second] = result.standings;
+  const [first, second, third] = result.standings;
   const max = Math.max(1, first?.points ?? 0);
   const leaderId = result.winner?.id ?? null;
-  const cols = [second, first].filter(Boolean);
+  // Pódio clássico: 2º à esquerda, 1º no meio, 3º à direita (em grupo).
+  const cols = [second, first, third].filter(Boolean);
+  const narrow = cols.length > 2;
   return (
     <View style={styles.podium}>
       {cols.map((s, i) => {
         const isLeader = s.player.id === leaderId;
         const h = 60 + 110 * (s.points / max);
         return (
-          <Animated.View key={s.player.id} entering={FadeInUp.delay(150 * i).springify()} style={styles.podiumCol}>
+          <Animated.View key={s.player.id} entering={FadeInUp.delay(150 * i).springify()} style={[styles.podiumCol, narrow && { width: 96 }]}>
             <Txt style={{ fontSize: 28 }}>{isLeader ? '👑' : ' '}</Txt>
             <Avatar emoji={s.player.avatar} color={s.player.color} size={isLeader ? 64 : 52} />
             <Txt variant="h3" numberOfLines={1}>
@@ -73,7 +75,7 @@ export default function RankingScreen() {
           {current.winner ? <Chip label={`${current.winner.avatar} lidera`} color={current.winner.color + '33'} textColor={current.winner.color} /> : null}
         </Row>
         <Podium result={current} />
-        <Row style={{ justifyContent: 'space-around' }}>
+        <Row style={{ justifyContent: 'space-around', flexWrap: 'wrap', rowGap: S.sm }}>
           {current.standings.map((s) => (
             <View key={s.player.id} style={{ alignItems: 'center' }}>
               <Txt variant="small">{s.player.name}</Txt>

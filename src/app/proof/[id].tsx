@@ -9,7 +9,7 @@ import { ReactionBar } from '@/components/ProofCard';
 import { Avatar, Button, Card, haptic, Row, Txt } from '@/components/ui';
 import { C, R, S } from '@/constants/theme';
 import { formatTime, periodLabel } from '@/domain/dates';
-import { getHabit } from '@/domain/habits';
+import { habitFor } from '@/domain/habits';
 import { usePlayers, useToday } from '@/hooks/useScoreBook';
 import { useActiveCheckins, useActiveDuel, useGame } from '@/store/useGame';
 import type { ReportReason } from '@/sync/supabase';
@@ -44,7 +44,7 @@ export default function ProofScreen() {
     );
   }
 
-  const habit = getHabit(checkin.habitId);
+  const habit = habitFor(duel, checkin.habitId);
   const owner = duel.players.find((p) => p.id === checkin.playerId);
   const isMine = checkin.playerId === me.id;
   const canDelete = isMine;
@@ -86,7 +86,7 @@ export default function ProofScreen() {
 
   const block = async () => {
     try {
-      await blockRival(duel.id);
+      await blockRival(duel.id, checkin.playerId);
       router.dismissTo('/');
     } catch (e) {
       Alert.alert('Ops!', e instanceof Error ? e.message : String(e));
