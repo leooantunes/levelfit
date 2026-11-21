@@ -44,11 +44,21 @@ type RcEntitlement = { expires_date: string | null; grace_period_expires_date: s
 
 async function sync(admin: ReturnType<typeof createClient>, uid: string, rcKey: string) {
   const res = await fetch(`https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(uid)}`, {
-    headers: { Authorization: `Bearer ${rcKey}`, 'Content-Type': 'application/json' },
+    // X-Is-Sandbox: sem ele o RevenueCat esconde compras de teste (Test Store, sandbox,
+    // TestFlight e a revisão da Apple/Google), e o Premium não ativa nesses casos.
+    headers: { Authorization: `Bearer ${rcKey}`, 'Content-Type': 'application/json', 'X-Is-Sandbox': 'true' },
   });
   if (!res.ok) throw new Error(`RevenueCat respondeu ${res.status}`);
   const body = await res.json();
   const ent: RcEntitlement | undefined = body?.subscriber?.entitlements?.[ENTITLEMENT];
+  // Diagnóstico: o que o RevenueCat conhece desse usuário (só nomes, sem dados pessoais).
+  console.log('premium-sync rc', JSON.stringify({
+    uid,
+    firstSeen: body?.subscriber?.first_seen ?? null,
+    entitlements: Object.keys(body?.subscriber?.entitlements ?? {}),
+    subscriptions: Object.keys(body?.subscriber?.subscriptions ?? {}),
+    nonSubscriptions: Object.keys(body?.subscriber?.non_subscriptions ?? {}),
+  }));
 
   const ends = [ent?.expires_date, ent?.grace_period_expires_date].filter(Boolean).map((d) => new Date(d!).getTime());
   const isLifetime = !!ent && ent.expires_date === null;

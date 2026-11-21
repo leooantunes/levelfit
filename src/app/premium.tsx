@@ -91,8 +91,16 @@ export default function PremiumScreen() {
     try {
       const outcome = await openPaywall();
       if (outcome === 'purchased' || outcome === 'restored' || outcome === 'already-pro') {
-        haptic('success');
-        Alert.alert('Bem-vindo ao Premium! 🏆', 'Duelos ilimitados, grupos, metas suas e estatísticas completas liberados.', [{ text: 'Bora!', onPress: () => router.back() }]);
+        // Só comemora se o servidor confirmou (é ele quem libera os duelos).
+        if (useGame.getState().plan.premium) {
+          haptic('success');
+          Alert.alert('Bem-vindo ao Premium! 🏆', 'Duelos ilimitados, grupos, metas suas e estatísticas completas liberados.', [{ text: 'Bora!', onPress: () => router.back() }]);
+        } else {
+          Alert.alert(
+            'Quase lá',
+            'A loja registrou sua compra, mas ainda não conseguimos ativar o Premium na sua conta. Tente "Restaurar compras" em alguns minutos.',
+          );
+        }
       } else if (outcome === 'error') {
         Alert.alert('Ops!', 'Não foi possível concluir a compra. Nenhuma cobrança foi feita. Tente de novo em instantes.');
       }
