@@ -34,7 +34,7 @@ export function openCompanySite() {
 }
 
 /** E-mail de suporte mostrado no app (a App Store exige um contato). */
-export const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'contato@sidequest.studio';
+export const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL || 'contatosidequeststudio@gmail.com';
 
 /** Abre a política no site da empresa; se não conseguir abrir o navegador, mostra a cópia que vem no app. */
 export function openPrivacyPolicy() {

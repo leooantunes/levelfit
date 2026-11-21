@@ -80,7 +80,7 @@ O Level Fit é publicado pela **SideQuest Studio**. O app aponta para o site da 
 | Página do app | https://sidequeststud-io.netlify.app/apps/levelfit |
 | Política de privacidade (cadastro, Premium, Minha conta) | https://sidequeststud-io.netlify.app/apps/levelfit/privacidade |
 | Exclusão de conta sem o app | https://sidequeststud-io.netlify.app/apps/levelfit/excluir-conta |
-| Contato | contato@sidequest.studio |
+| Contato | contatosidequeststudio@gmail.com |
 
 Nas lojas, use:
 
@@ -138,7 +138,7 @@ supabase/schema.sql    banco, RLS, funções e storage
 - **Bloquear** (aba Perfil do duelo → Bloquear, ou depois de denunciar uma prova) chama a RPC `block_player`: guarda o bloqueio na tabela `blocks`, apaga as provas de quem bloqueou naquele duelo e tira a pessoa dele. `join_duel` recusa juntar duas pessoas que se bloquearam. A lista e o desbloqueio ficam em Minha conta.
 - **Relógio** (Minha conta → ⌚ Relógio): lê o Apple Health (iOS, [`health.ios.ts`](src/lib/health.ios.ts)) ou o Health Connect (Android, [`health.android.ts`](src/lib/health.android.ts)). Ao abrir o app, confere hoje e ontem; meta batida vira prova automática sem foto (coluna `health`), uma por duelo/meta/dia (id determinístico), e o rival pode contestar. Metas e alvos em [`healthGoals.ts`](src/domain/healthGoals.ts): 10 mil passos, 30 min de treino, 7h de sono, 10 min de meditação e 20 min ao ar livre (só Apple Watch). Dados digitados à mão no app de saúde não contam. Precisa de build nativo novo (não roda no Expo Go). Na Play Store, os dados de saúde exigem a declaração de Health Connect no Play Console.
 - **Story do Instagram:** na comemoração da semana e do mês, "Postar no Story" gera uma arte 1080x1920 ([`StoryCard.tsx`](src/components/StoryCard.tsx)) com `react-native-view-shot` e abre o editor de Stories do Instagram via `react-native-share`. Exige `EXPO_PUBLIC_FACEBOOK_APP_ID` (regra da Meta); sem ele, ou sem Instagram instalado, abre o menu de compartilhar do celular.
-- **Privacidade e suporte:** os links abrem a política no site da SideQuest Studio. Se o navegador não abrir, o app mostra a cópia em [`src/lib/privacyPolicy.ts`](src/lib/privacyPolicy.ts) (tela `/privacy`). O contato padrão é contato@sidequest.studio.
+- **Privacidade e suporte:** os links abrem a política no site da SideQuest Studio. Se o navegador não abrir, o app mostra a cópia em [`src/lib/privacyPolicy.ts`](src/lib/privacyPolicy.ts) (tela `/privacy`). O contato padrão é contatosidequeststudio@gmail.com.
 
 ## Premium (Level Fit Pro)
 
